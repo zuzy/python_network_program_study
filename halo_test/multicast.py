@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 #coding: utf-8
 
 # cannot work in python3 ?!
@@ -24,8 +24,8 @@ class MulticastClient(threading.Thread):
         threading.Thread.__init__(self)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        local_ip = socket.gethostbyname(socket.gethostname())
-        sock.bind((local_ip, port))
+        # local_ip = socket.gethostbyname(socket.gethostname())
+        sock.bind(('0.0.0.0', port))
 
         mreq = struct.pack("=4sl", socket.inet_aton('224.0.0.1'), socket.INADDR_ANY)
         sock.setsockopt(socket.IPPROTO_IP,socket.IP_ADD_MEMBERSHIP,mreq)
@@ -46,9 +46,9 @@ class MulticastClient(threading.Thread):
                 d = {'cmd':'hopediscover'}
                 d['params'] = {'deviceid':get_mac()}
                 s = json.dumps(d) + '\n'
-                print('send to')
-                sock.sendto(s, self.destaddr)
-                print('send ok')
+                # print('send to, ', s)
+                sock.sendto(s.encode(), self.destaddr)
+                # print('send ok')
                 while True:
                     infds, outfds, errfds = select.select([sock,],[],[],1)
                     if len(infds) > 0:

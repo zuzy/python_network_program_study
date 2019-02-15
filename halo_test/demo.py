@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 # coding: utf-8
-import time
-import socket
+import socket, time, uuid, asyncio
 
 # 组播组IP和端口
 mcast_group_ip = '224.0.0.1'
@@ -51,9 +50,5 @@ def receiver():
             print("while receive message error occur")
 
 
-if __name__ == "__main__":
-    receiver()
-
-    
 if __name__ == "__main__":
     sender()
