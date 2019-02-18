@@ -113,38 +113,85 @@ halo_cmd = {
     }
 }
 
-def help(data):
-    cmd_list = data.split(':', 1)
+def help(cmd_list):
     if len(cmd_list) == 1 or len(cmd_list[1]) < 1:
-        print('list all cmd')
+        print('All the cmd:')
+        l = []
         for cmd in halo_cmd:
+            l.append(cmd)
+        for cmd in halo_cmd_bool:
+            l.append(cmd)
+        l.sort()
+        for cmd in l:
             print('\t', cmd)
     else:
         cmd = cmd_list[1]
         cmd = cmd.strip()
-        if halo_cmd[cmd]:
+
+        if cmd in halo_cmd:
             print(halo_cmd[cmd][COMMENT])
+        elif cmd in halo_cmd_bool:
+            print(halo_cmd_bool[cmd][COMMENT])
         else:
-            print('cmd[%s] is not support' % data)
+            print('cmd[%s] is not support' % cmd)
     return None
 
-def parse_str(data):
-    pass
+def parse_str(cmd_list, data):
+    try:
+        length = len(cmd_list)
+        cmd = cmd_list[0]
+        if length != halo_cmd[cmd][ARGNUM]:
+            raise Exception('cmd[%s] is illeagal\n%s' %(data, halo_cmd[cmd][COMMENT]))
+        if length == 1:
+            return halo_cmd[cmd][CMD] + '\n'
+        else:
+            arg = cmd_list[1].strip()
+            return (halo_cmd[cmd][CMD] % arg) + '\n'
 
-def parse_bool(data):
-    pass
+    except Exception as e:
+        print(e)
+        return None
+
+def parse_bool(cmd_list, data):
+    try:
+        length = len(cmd_list)
+        cmd = cmd_list[0]
+        if length != halo_cmd_bool[cmd][ARGNUM]:
+            raise Exception('cmd[%s] is illeagal\n%s' %(data, halo_cmd[cmd][COMMENT]))
+
+        arg = cmd_list[1].strip()
+        if len(arg):
+            b = False
+            if arg == 'y' or arg == 'Y':
+                b = True
+            elif arg == 'n' or arg == 'N':
+                b = False
+            else:
+                raise Exception('cmd[%s] is illeagal\n%s' %(data, halo_cmd[cmd][COMMENT]))
+            return json.dumps({CMD:halo_cmd_bool[cmd][CMD], PARAMS:{halo_cmd_bool[cmd][PARAMS]:b}}) + '\n'
+        else:
+            raise Exception('cmd[%s] is illeagal\n%s' %(cmd, halo_cmd[cmd][COMMENT]))
+    except Exception as e:
+        print(e)
+        return None
+
 
 def parse_cmd(data):
     # data = str(data).encode()
     try:
         cmd_list = data.split(':', 1)
-        length = len(cmd_list)
         cmd = cmd_list[0]
         if cmd == 'help':
-            return help(data)
+            return help(cmd_list)
+        
+        if cmd in halo_cmd :
+            return parse_str(cmd_list, data)
+        elif cmd in halo_cmd_bool:
+            return parse_bool(cmd_list, data)
+        else:
+            raise Exception('cmd[%s] is not support' % data)
 
-        print(cmd_list)
-        # if (not halo_cmd[cmd]) and (not halo_cmd_bool[cmd]):
+
         
         if not cmd in halo_cmd and not cmd in halo_cmd_bool:
         # if not cmd in halo_cmd :

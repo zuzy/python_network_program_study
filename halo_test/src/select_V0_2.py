@@ -2,6 +2,7 @@
 # coding: utf-8
 import socket, time, uuid, asyncio, select, sys, json, threading, struct, os
 from halo_cmd import parse_cmd
+from database import Database
 
 class R():
     def __init__(self):
@@ -141,10 +142,28 @@ class Tcp_handle:
 
     def active_sending(self, times = 3):
         pass
+
+    def dispatch_recv(self, data):
+        try:
+            d = Database()
+            for x in data.split('\n'):
+                x = x.strip()
+                if len(x) > 0:
+                    cmd = json.loads(x)
+                    # print(cmd['cmd'])
+                    db_str = d.dumps(cmd['cmd'])
+                    if db_str:
+                        self.send(db_str + '\n')
+        except Exception as e:
+            print('dispatch error ',e)
+
     def recv(self):
         try:
             data = self.sock.recv(1024)
-            print('tcp recv ', data.decode())
+            data = data.decode().strip()
+            print('tcp recv ', data)
+            
+            self.dispatch_recv(data)
         except Exception as e:
             print('tcp recv error ', e)
     def send(self, data):
@@ -186,7 +205,8 @@ class Std_handle:
             except:
                 s = parse_cmd(cmd)
                 print(s)
-                self.tcp_handle.send(s)
+                if s:
+                    self.tcp_handle.send(s)
         except:
             print('keyboard input error')
     def send(self):
