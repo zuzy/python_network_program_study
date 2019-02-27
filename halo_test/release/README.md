@@ -4,7 +4,7 @@ halo协议测试小工具
 
 ****
 	
-|Author|朱彤|
+|Author|Z|
 |---|---
 |E-mail|zhutong@nbhope.cn
 
@@ -138,7 +138,4 @@ halo协议测试小工具
 ## 智能家居配置
 默认dev_db目录中文件为模拟的本地`场景/设备/楼层/房间`信息,编辑params内容
 ***
-
-
-
 

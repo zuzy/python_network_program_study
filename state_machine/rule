@@ -1,0 +1,16 @@
+{
+    "state_range": "a-d",
+    "act_range": "A-D",
+    "rules": {
+        "trager": "A,B,C",
+        "exclusive": [
+            "A,B,C"
+        ],
+        "relation": [
+            "A>H",
+            "B>F",
+            "k=C",
+            "j=G"
+        ]
+    }
+}
