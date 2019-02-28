@@ -1,0 +1,23 @@
+{
+    "state_range": "a-e",
+    "act_range": "A-E",
+    "rules": {
+        "static": "D",
+        "trager": "A,B,C,E",
+        "exclusive": [
+            "A,B",
+            "A,C"
+        ],
+        "ban": [
+            "a,D",
+            "b,D",
+            "!c,D"
+        ],
+        "relation": [
+            "A>H",
+            "B>F",
+            "k=C",
+            "j=G"
+        ]
+    }
+} 
