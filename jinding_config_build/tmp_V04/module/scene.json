@@ -1,0 +1,23 @@
+{
+    "通风场景": {
+        "凉风扇(外)": false,
+        "音乐": false,
+        "换气": false,
+        "照明一": false,
+        "照明二": false
+    },
+    "洗漱场景": {
+        "音乐": false,
+        "换气": false,
+        "照明一": false,
+        "照明二": false
+    },
+    "洗浴场景": {
+        "音乐": true,
+        "换气": false,
+        "凉风(内)": false,
+        "照明一": false,
+        "照明二": false,
+        "取暖": false
+    }
+}
