@@ -42,6 +42,7 @@ class Scene(Excel):
         '关':False,
     }
     name = 'scene'
+    staff = {}
     def __init__(self, path='relation.xlsx'):
         super().__init__(path, self.name)
         self.scenes = self.cols[0].copy()
@@ -60,11 +61,56 @@ class Scene(Excel):
                     if rel != self.ban:
                         d[sce][fun] = self.judge[rel]
             json.dump(d, f, ensure_ascii=False, indent=4)
+            self.batch = d
         except Exception as e:
             print(e)
-    
-    def paint(self, tk):
-        pass
+
+    def find_active(self):
+        for k, v in self.staff.items():
+            if v['state'] == 'on':
+                return True, k
+        else:
+            return False, None
+
+    def set_status(self, name, state):
+        if state == 'on':
+            self.staff[name]['state'] = 'on'
+            self.staff[name]['control']['bg'] = 'red'
+            for n, ob in self.staff.items():
+                if n != name:
+                    ob['state'] = 'off'
+                    ob['control']['bg'] = 'white'
+        else:
+            self.staff[name]['state'] = 'off'
+            self.staff[name]['control']['bg'] = 'white'
+        return state, self.batch[name]
+
+    def callback(self, event):
+        name = event.widget['text']
+        state = self.staff[name]['state']
+        state = _trager_(state)
+        return self.set_status(name, state)
+            
+    def check_status(self, status):
+
+        for n, st in status.items():
+            if st == 'on':
+                continue
+            for k, v in self.batch.items():
+                if (n in v) and v[n]:
+                    self.staff[k]['state'] = 'off'
+                    self.staff[k]['control']['bg'] = 'white'
+                
+
+    def paint(self, tk, pos, callback):
+        for nsce, sce in enumerate(self.scenes):
+            self.staff[sce] = {
+                'state':'off',
+                'control':Button(tk, text=sce, bg='white')
+            }
+            self.staff[sce]['control'].bind('<Button-1>', callback)
+            self.staff[sce]['control'].grid(row=pos[0], column=pos[1] + nsce)
+        return self.staff
 
 
 class Strong(Excel):
@@ -177,6 +223,24 @@ class Major():
         self.dependence.build(menu + self.path['dependence'])
         self.dep_rela = self.dependence.get_relation()
 
+    def set_status(self, name, status):
+        if name not in self.strong.strong:
+            return
+        rela = self.stg_rela[name]
+        if status == 'on':
+            for s, r in rela.items():
+                if r == 'trager':
+                    self.staff[s]['state'] = 'on'
+                elif r == 'exclusive':
+                    self.staff[s]['state'] = 'off'
+                else:
+                    pass
+                self.staff[s]['control']['bg'] = _color_[self.staff[s]['state']]
+        else:
+            self.staff[name]['state'] = 'off'
+            self.staff[name]['control']['bg'] = 'white'
+        self.update_dep_status(name)
+
     def update_status(self, name):
         rela = self.stg_rela[name]
         for s, r in rela.items():
@@ -233,11 +297,15 @@ class Major():
         pass
 
 
-        
+
     def s_callback(self, event):
-        name =  event.widget['text']
+        name =  event.widget['text'].split(":")[0]
         self.update_status(name)
         self.update_dep_status(name)
+        status = {}
+        for stg in self.strong.strong:
+            status[stg] = self.staff[stg]['state']
+        return status
         
 
     def d_callback(self, event):
@@ -253,13 +321,13 @@ class Major():
         self.staff[name]['state'] = state_new
         event.widget['state'], event.widget['bg'] = _parse_(state_new)
 
-    def paint(self, tk, pos):
+    def paint(self, tk, pos, cb):
         for nstg, stg in enumerate(self.strong.strong):
             self.staff[stg] = {
                 'state':'off',
                 'control':Button(tk, text=stg, bg='white')
             }
-            self.staff[stg]['control'].bind('<Button-1>', self.s_callback)
+            self.staff[stg]['control'].bind('<Button-1>', cb)
             self.staff[stg]['control'].grid(row=pos[0], column=pos[1] + nstg)
         offset = len(self.strong.strong) + pos[1]
         for ndep, dep in enumerate(self.dependence.depends):
@@ -291,20 +359,32 @@ class Independence(Excel):
             print(self.name, ' failed, ', e)
         pass
     
+    def set_status(self, name, status):
+        if name in self.independece:
+            self.staff[name]['state'] = status
+            if status == 'on':
+                self.staff[name]['control']['bg'] = 'red'
+            else:
+                self.staff[name]['control']['bg'] = 'white'
+
     def callback(self, event):
         name =  event.widget['text']
         state_new = _trager_(self.staff[name]['state'])
         self.staff[name]['state'] = state_new
         event.widget['state'], event.widget['bg'] = _parse_(state_new)
+        state = {}
+        for indep in self.independece:
+            state[indep] = self.staff[indep]['state']
+        return state
 
 
-    def paint(self, tk, pos):
+    def paint(self, tk, pos, callback):
         for nindep, indep in enumerate(self.independece):
             self.staff[indep] = {
                 'state':'off',
                 'control':Button(tk, text=indep, bg='white')
             }
-            self.staff[indep]['control'].bind('<Button-1>', self.callback)
+            self.staff[indep]['control'].bind('<Button-1>', callback)
             self.staff[indep]['control'].grid(row=pos[0], column=pos[1] + nindep)
 
         
@@ -332,8 +412,6 @@ class Build():
     path = {
         'scene':'scene.json',
         'major':'major/',
-        # 'strong':'strong.json',
-        # 'dependence':'dependence/',
         'independence':'independence.json',
         'reset':'reset.json'
     }
@@ -371,11 +449,40 @@ class Build():
         print(self.major.strong.strong)
         print(self.major.dependence.depends)
         pass
+    
+    def sce_callback(self, event):
+        en, name = self.scene.find_active()
+        if en and name != event.widget['text']:
+            st, batch = self.scene.set_status(name, 'off')
+            for k, v in batch.items():
+                if v:
+                    self.independence.set_status(k, st)
+                    self.major.set_status(k, st)
+
+        
+        st, batch = self.scene.callback(event)
+        for k, v in batch.items():
+            if v:
+                self.independence.set_status(k, st)
+                self.major.set_status(k, st)
+
+            
+
+    def major_callback(self, event):
+        status = self.major.s_callback(event)
+        print(status)
+        self.scene.check_status(status)
+
+    def indep_callback(self, event):
+        status = self.independence.callback(event)
+        print(status)
+        self.scene.check_status(status)
 
     def init_tk(self):
         self.tk = Tk()
-        self.independence.paint(self.tk, (0,0))
-        self.major.paint(self.tk, (1, 0))
+        self.scene.paint(self.tk, (0,0), self.sce_callback)
+        self.independence.paint(self.tk, (1,0), self.indep_callback)
+        self.major.paint(self.tk, (2, 0), self.major_callback)
     
     def run(self):
         mainloop()

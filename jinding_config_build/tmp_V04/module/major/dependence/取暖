@@ -4,6 +4,5 @@
         "state": "timer_on"
     },
     "摆风": true,
-    "风速": false,
     "温度": 28
 }
