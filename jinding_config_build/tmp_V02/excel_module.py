@@ -18,37 +18,47 @@ class Excel:
         except Exception as e:
             print(e)
 
-class Index(Excel):
-    def __init__(self, path = 'relation.xlsx', sheet = 'index'):
-        try:
-            super().__init__(path, sheet)
-            self.button_names = self.cols
-            self._init_depend()
-
-        except Exception as e:
-            print(e)
-    def _init_depend(self, path='relation.xlsx', sheet = 'depend'):
-        dep = Excel(path, sheet)
-        nodes = dep.rows[0].copy()
+class Depends(Excel):
+    def __init__(self, path='relation.xlsx', sheet = 'depend'):
+        dep = super().__init__(path, sheet)
+        nodes = self.rows[0].copy()
         del(nodes[0])
-        limits = dep.cols[0].copy()
+        limits = self.cols[0].copy()
         del(limits[0])
         self.depends = {}
         for nnode, node in enumerate(nodes):
             rels = []
             for nlimit, limit in enumerate(limits):
-                rel = dep.cols[nnode + 1][nlimit + 1]
+                rel = self.cols[nnode + 1][nlimit + 1]
                 if rel == '共存':
                     rels.append(limit)
             self.depends[node] = rels
-        print(self.depends)
+        # print(self.depends)
 
-class Depend(Excel):
-    def __init__(self, path='relation.xlsx', sheet = 'depend'):
+class Index(Excel):
+    def __init__(self, path = 'relation.xlsx', sheet = 'index'):
         try:
             super().__init__(path, sheet)
+            self.button_names = self.cols
+            # self._init_depend()
+
         except Exception as e:
             print(e)
+    # def _init_depend(self, path='relation.xlsx', sheet = 'depend'):
+    #     dep = Excel(path, sheet)
+    #     nodes = dep.rows[0].copy()
+    #     del(nodes[0])
+    #     limits = dep.cols[0].copy()
+    #     del(limits[0])
+    #     self.depends = {}
+    #     for nnode, node in enumerate(nodes):
+    #         rels = []
+    #         for nlimit, limit in enumerate(limits):
+    #             rel = dep.cols[nnode + 1][nlimit + 1]
+    #             if rel == '共存':
+    #                 rels.append(limit)
+    #         self.depends[node] = rels
+    #     print(self.depends)
 
 class Relation(Excel):
     def __init__(self, path='relation.xlsx', sheet = 'rule'):

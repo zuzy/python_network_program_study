@@ -1,0 +1,37 @@
+{
+    "凉风(内)": {
+        "凉风(内)": "trager",
+        "凉干": "exclusive",
+        "换气": "pass",
+        "取暖": "exclusive",
+        "热干": "exclusive"
+    },
+    "凉干": {
+        "凉风(内)": "exclusive",
+        "凉干": "trager",
+        "换气": "exclusive",
+        "取暖": "exclusive",
+        "热干": "exclusive"
+    },
+    "换气": {
+        "凉风(内)": "pass",
+        "凉干": "exclusive",
+        "换气": "trager",
+        "取暖": "pass",
+        "热干": "exclusive"
+    },
+    "取暖": {
+        "凉风(内)": "exclusive",
+        "凉干": "exclusive",
+        "换气": "pass",
+        "取暖": "trager",
+        "热干": "exclusive"
+    },
+    "热干": {
+        "凉风(内)": "exclusive",
+        "凉干": "exclusive",
+        "换气": "exclusive",
+        "取暖": "exclusive",
+        "热干": "trager"
+    }
+}
