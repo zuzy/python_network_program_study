@@ -217,7 +217,7 @@ class Reset(Excel):
     def build(self, path):
         try:
             f = open(path, 'w')
-            json.dump(self.reset, f, ensure_ascii=False, indent=4)
+            json.dump(self.reset, f, ensure_ascii=False)
             f.close()
         except Exception as e:
             print(self.name, ' failed, ', e)
@@ -243,7 +243,7 @@ class Build(Relation):
         s_conf = self.Sce.build()
         # print(s_conf)
         f = open(self.menu + 'scene.conf', 'w')
-        json.dump(s_conf, f, ensure_ascii=False, indent=4)
+        json.dump(s_conf, f, ensure_ascii=False)
         f.close()
 
         self.Major = Major()
@@ -253,7 +253,11 @@ class Build(Relation):
         rule = self.Major.build()
         # print(rule)
         f = open(self.menu + 'major.rule', 'w')
-        json.dump(rule,f, ensure_ascii=False, indent=4)
+        json.dump(rule,f, ensure_ascii=False)
+        f.close()
+
+        f = open(self.menu + 'depends.conf', 'w')
+        json.dump(self.depends, f, ensure_ascii=False)
         f.close()
 
         for rk, rv in rule.items():
@@ -262,7 +266,7 @@ class Build(Relation):
                 d = {}
                 for dep in rv['deps']:
                     d[dep] = False
-                json.dump(d, f, ensure_ascii=False, indent=4)
+                json.dump(d, f, ensure_ascii=False)
                 f.close()
 
         self.Indep = Independence()
@@ -270,7 +274,7 @@ class Build(Relation):
         indep = self.Indep.build()
         # print(indep)
         f = open(self.menu + 'indep.conf', 'w')
-        json.dump(indep, f, ensure_ascii=False, indent=4)
+        json.dump(indep, f, ensure_ascii=False)
         f.close()
         # self.stand_alone = self.indep.copy()
         # self.stand_alone.extend(self.depends)
@@ -292,7 +296,7 @@ class Build(Relation):
             state[indep] = False
         # print(state)
         f = open(self.menu + 'state.json', 'w')
-        json.dump(state, f, ensure_ascii=False, indent=4)
+        json.dump(state, f, ensure_ascii=False)
         f.close()
         return state
     
