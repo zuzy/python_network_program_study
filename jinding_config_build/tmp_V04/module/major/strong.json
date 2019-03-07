@@ -1,37 +1,37 @@
 {
-    "取暖": {
-        "取暖": "trager",
-        "凉风(内)": "exclusive",
-        "凉干": "exclusive",
-        "热干": "exclusive",
-        "换气": "pass"
-    },
-    "凉风(内)": {
-        "取暖": "exclusive",
-        "凉风(内)": "trager",
-        "凉干": "exclusive",
-        "热干": "exclusive",
-        "换气": "pass"
-    },
-    "凉干": {
-        "取暖": "exclusive",
-        "凉风(内)": "exclusive",
-        "凉干": "trager",
-        "热干": "exclusive",
-        "换气": "exclusive"
-    },
-    "热干": {
-        "取暖": "exclusive",
-        "凉风(内)": "exclusive",
-        "凉干": "exclusive",
-        "热干": "trager",
-        "换气": "exclusive"
-    },
     "换气": {
+        "换气": "trager",
         "取暖": "pass",
         "凉风(内)": "pass",
         "凉干": "exclusive",
-        "热干": "exclusive",
-        "换气": "trager"
+        "热干": "exclusive"
+    },
+    "取暖": {
+        "换气": "pass",
+        "取暖": "trager",
+        "凉风(内)": "exclusive",
+        "凉干": "exclusive",
+        "热干": "exclusive"
+    },
+    "凉风(内)": {
+        "换气": "pass",
+        "取暖": "exclusive",
+        "凉风(内)": "trager",
+        "凉干": "exclusive",
+        "热干": "exclusive"
+    },
+    "凉干": {
+        "换气": "exclusive",
+        "取暖": "exclusive",
+        "凉风(内)": "exclusive",
+        "凉干": "trager",
+        "热干": "exclusive"
+    },
+    "热干": {
+        "换气": "exclusive",
+        "取暖": "exclusive",
+        "凉风(内)": "exclusive",
+        "凉干": "exclusive",
+        "热干": "trager"
     }
 }

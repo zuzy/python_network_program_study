@@ -1,7 +1,7 @@
 {
-    "风速": true,
     "定时": {
-        "val": "90",
-        "state": "timer_off"
-    }
+        "state": "timer_off",
+        "val": "90"
+    },
+    "风速": true
 }

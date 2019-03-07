@@ -1,8 +1,8 @@
 {
+    "温度": 28,
     "定时": {
-        "val": "60",
-        "state": "timer_on"
+        "state": "timer_on",
+        "val": "60"
     },
-    "摆风": true,
-    "温度": 28
+    "摆风": true
 }
