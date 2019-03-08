@@ -1,15 +1,26 @@
 {
-    "热干": {
+    "换气": {
+        "换气": "trager",
+        "取暖": "pass",
+        "凉干": "exclusive",
         "deps": [
-            "摆风",
             "风速",
             "定时"
         ],
-        "热干": "trager",
-        "换气": "exclusive",
+        "凉风(内)": "pass",
+        "热干": "exclusive"
+    },
+    "取暖": {
+        "换气": "pass",
+        "取暖": "trager",
         "凉干": "exclusive",
-        "取暖": "exclusive",
-        "凉风(内)": "exclusive"
+        "deps": [
+            "摆风",
+            "定时",
+            "温度"
+        ],
+        "凉风(内)": "exclusive",
+        "热干": "exclusive"
     },
     "dependence": [
         "摆风",
@@ -17,51 +28,40 @@
         "定时",
         "温度"
     ],
-    "换气": {
-        "deps": [
-            "风速",
-            "定时"
-        ],
-        "热干": "exclusive",
-        "换气": "trager",
-        "凉干": "exclusive",
-        "取暖": "pass",
-        "凉风(内)": "pass"
-    },
     "凉干": {
+        "换气": "exclusive",
+        "取暖": "exclusive",
+        "凉干": "trager",
         "deps": [
             "摆风",
             "风速",
             "定时"
         ],
-        "热干": "exclusive",
-        "换气": "exclusive",
-        "凉干": "trager",
-        "取暖": "exclusive",
-        "凉风(内)": "exclusive"
-    },
-    "取暖": {
-        "deps": [
-            "摆风",
-            "定时",
-            "温度"
-        ],
-        "热干": "exclusive",
-        "换气": "pass",
-        "凉干": "exclusive",
-        "取暖": "trager",
-        "凉风(内)": "exclusive"
+        "凉风(内)": "exclusive",
+        "热干": "exclusive"
     },
     "凉风(内)": {
+        "换气": "pass",
+        "取暖": "exclusive",
+        "凉干": "exclusive",
         "deps": [
             "摆风",
             "风速",
             "定时"
         ],
-        "热干": "exclusive",
-        "换气": "pass",
-        "凉干": "exclusive",
+        "凉风(内)": "trager",
+        "热干": "exclusive"
+    },
+    "热干": {
+        "换气": "exclusive",
         "取暖": "exclusive",
-        "凉风(内)": "trager"
+        "凉干": "exclusive",
+        "deps": [
+            "摆风",
+            "风速",
+            "定时"
+        ],
+        "凉风(内)": "exclusive",
+        "热干": "trager"
     }
 }

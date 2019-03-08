@@ -4,6 +4,8 @@
 import json, os
 from excel_module import *
 from tkinter import *
+import lupa
+from time import perf_counter as counter
 
 _state_ = {
     'ban':'disable'
@@ -347,22 +349,39 @@ class Build(Relation):
         '''
             main logic part
         '''
-        if name not in self.sce:
-            state = self.fun(state, name)
-            self.scene_check(state)
-        else:
-            if not state[name]:
-                '''
-                disable all other enabled scene!
-                '''
-                for s in self.sce:
-                    if state[s]:
-                        state.update(self.scene_control(s, state, False))
-                # [state.update(self.scene_control(s, state, False)) for s in self.sce]
-                state[name] = True
-            else:
-                state[name] = False
-            self.scene_control(name, state, state[name])
+        _start = counter()
+        f = os.popen('pwd', 'r')
+        pwd = f.read().strip()
+        f.close()
+        script = pwd + '/state_machine.lua'
+        f = os.popen("lua "+ script + (" '%s'" % name), 'r')
+        # print('popen',f.read())
+        state = json.load(f)
+        print("system call lua spend %d ms!!!" % ((counter() - _start) * 1000 ))
+        f.close()
+        self.scene_check(state)
+        
+        # if name not in self.sce:
+        #     # state = self.fun(state, name)
+        #     f = os.popen("lua ~/project/python_network_program_study/jinding_config_build/tmp_V06/state_machine.lua '%s'" % name, 'r')
+        #     # print('popen',f.read())
+        #     state = json.load(f)
+        #     f.close()
+        #     self.scene_check(state)
+        # else:
+
+        #     if not state[name]:
+        #         '''
+        #         disable all other enabled scene!
+        #         '''
+        #         for s in self.sce:
+        #             if state[s]:
+        #                 state.update(self.scene_control(s, state, False))
+        #         # [state.update(self.scene_control(s, state, False)) for s in self.sce]
+        #         state[name] = True
+        #     else:
+        #         state[name] = False
+        #     self.scene_control(name, state, state[name])
         '''
         main logic end
         '''
@@ -451,3 +470,6 @@ class Build(Relation):
         
 b = Build()
 b.run()
+# lua = lupa.LuaRuntime()
+# # lua['package']['path'] = '/tmp/lua/?.lua'
+# sm = lua.require('state_machine')
