@@ -187,6 +187,24 @@ local function F(state, name, action)
     return state
 end
 
+local function scene_check(state)
+    for ks, vs in pairs(sce) do
+        -- print(ks, vs)
+        if state[ks] then
+            -- print('true!!!')
+            for n, v in pairs(vs) do
+                -- print(n, v)
+                if v and not state[n] then
+                    -- print('find!!!')
+                    state[ks] = false
+                    break
+                end
+            end
+        end
+    end
+    return state
+end
+
 local function batch_f(state, sce_name, action)
     sce_batch = sce[sce_name]
     if action == nil then
@@ -225,6 +243,7 @@ local function state_machine(name)
             batch_f(state,name,not(state[name]))
         else
             F(state, name, nil)
+            scene_check(state)
             -- print("not a scene", name)
         end
     end
@@ -249,6 +268,7 @@ end
 -- state_machine('照明二')
 -- state_machine('洗浴场景')
 state_machine(arg[1])
+-- print(os.clock())
 -- print(arg[1])
 -- state_machine('取暖')
 
