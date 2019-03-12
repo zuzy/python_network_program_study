@@ -260,6 +260,29 @@ cJSON *Fun(cJSON *state, char *name, STATE action)
     return state;
 }
 
+cJSON *scene_check(cJSON *state)
+{
+    cJSON *sce = get_scene();
+    int nsce = cJSON_GetArraySize(sce);
+    int i;
+    for(i = 0; i < nsce; i++) {
+        cJSON *sitem = cJSON_GetArrayItem(sce, i);
+        if(cJSON_GetObjectItem(state, sitem->string)->type == cJSON_True) {
+            int nsitem = cJSON_GetArraySize(sitem);
+            int j = 0;
+            for(j = 0; j < nsitem; j++) {
+                cJSON *action_item = cJSON_GetArrayItem(sitem, j);
+                if(action_item->type == cJSON_True &
+                cJSON_GetObjectItem(state, action_item->string)->type != cJSON_True) {
+                    cJSON_ReplaceItemInObject(state, sitem->string, cJSON_CreateFalse());
+                    break;
+                }
+            }
+        }
+    }
+    return state;
+}
+
 cJSON *batch_fun(cJSON *state, char *sce_name, STATE action)
 {
     set_state(state, sce_name, action);
@@ -305,10 +328,13 @@ int main(int argc, char const *argv[])
                             batch_fun(state, s->string, false);
                         }
                     }
+                    batch_fun(state, argv[1], EN);
+                } else {
+                    batch_fun(state, argv[1], DIS);
                 }
-                batch_fun(state, argv[1], NIL);
             } else {
                 Fun(state, argv[1], NIL);
+                scene_check(state);
                 // not a scene
             }
         }
