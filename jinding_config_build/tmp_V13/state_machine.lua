@@ -36,7 +36,8 @@ function list_extend(tar, sub)
     end
 end
 
-local _root_ = ''
+local _root_ = '/tmp/'
+-- local _root_ = ''
 local _menu_ = _root_..'module/'
 local _major_path_ = _menu_..'major.rule'
 local _indep_path_ = _menu_..'indep.conf'
@@ -217,10 +218,12 @@ end
 local function batch_f(state, sce_name, action)
     sce_batch = sce[sce_name]
     if action == nil then
+        -- print('action is nil')
         state[sce_name] = not(state[sce_name]) 
     else
         state[sce_name] = action
     end
+    -- print(state[sce_name])
     for n, s in pairs(sce_batch) do
         if s then
             state = F(state, n, state[sce_name])
@@ -232,11 +235,21 @@ local function batch_f(state, sce_name, action)
     return state
     
 end
-
-local function state_machine(name)
+-- btn == 'on' 'off'
+local function state_machine(name, btn)
     local f = io.open(_state_path_)
     local state = json.decode(f:read())
+    -- print('state old', json.encode(state))
     f:close()
+    -- print(btn, type(btn))
+    if btn == 'on' then
+        btn = true
+    elseif btn == 'off' then
+        btn = false
+    else
+        btn = nil
+    end
+
     if state[name] == DISABLE then
         -- print("disable", name)
         return state
@@ -258,16 +271,17 @@ local function state_machine(name)
                 state[k] = false
             end
         elseif check_scene(name) then
-            if state[name] == false then
+            if state[name] ~= btn then
+                -- print(name, state[name])
                 for s, t in pairs(sce) do
-                    if state[s] then
+                    if state[s] and s ~= name then
                         state = batch_f(state,s,false)
                     end
                 end
+                batch_f(state,name,btn)
             end
-            batch_f(state,name,not(state[name]))
         else
-            F(state, name, nil)
+            F(state, name, btn)
             scene_check(state)
             -- print("not a scene", name)
         end
@@ -292,7 +306,7 @@ end
 -- return sm
 -- state_machine('照明二')
 -- state_machine('洗浴场景')
-state_machine(arg[1])
+state_machine(arg[1], arg[2])
 -- print(os.clock())
 -- print(arg[1])
 -- state_machine('取暖')
