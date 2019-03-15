@@ -217,6 +217,31 @@ class Reset(Excel):
     
     def build(self):
         return self.reset
+'''
+    ["音乐"] = 'music_play',
+'''
+class Language(Excel):
+    name = 'language'
+    path = 'lua_language/'
+    def __init__(self, path = 'relation.xlsx'):
+        super().__init__(path, self.name)
+        print(self.rows[0])
+        self.languages = self.rows[0].copy()
+        del(self.languages[0])
+        self.ori = self.cols[0]
+        del(self.ori[0])
+    def build(self):
+        os.system('mkdir '+self.path)
+        for i, k in enumerate(self.languages):
+            lang = self.cols[i + 1].copy()
+            del(lang[0])
+            f = open(self.path + k + '.lua', 'w')
+            f.write('lang_tab = {\n')
+            for n, node in enumerate(lang):
+                f.write('\t["%s"] = \t"%s",\n' % (self.ori[n], node))
+            f.write('}')
+            f.close()
+
 
 class Build(Relation):
     menu = 'module/'
@@ -286,6 +311,8 @@ class Build(Relation):
         # print('state', state)
         self.init_staff(state)
 
+        self.Lang = Language()
+        self.Lang.build()
 
 
     def init_state(self):

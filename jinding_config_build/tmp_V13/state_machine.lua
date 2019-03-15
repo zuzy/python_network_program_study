@@ -36,8 +36,8 @@ function list_extend(tar, sub)
     end
 end
 
-local _root_ = '/tmp/'
--- local _root_ = ''
+-- local _root_ = '/tmp/'
+local _root_ = ''
 local _menu_ = _root_..'module/'
 local _major_path_ = _menu_..'major.rule'
 local _indep_path_ = _menu_..'indep.conf'
