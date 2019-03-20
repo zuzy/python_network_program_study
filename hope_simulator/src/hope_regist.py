@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import requests
-import json, sys, os, re
+import json, sys, os, re, binascii
 from hope_post  import Hp_post
 from hope_netif import *
 from hope_music import *
@@ -26,6 +26,26 @@ class Regist(Net_info, Hp_post):
         print(self.post(tmp, api=self.apis['mac']))
         # self.post(tmp, api=self.apis['mac'])
     
+    
+    def cover(self):
+        nref = int(self.ref)
+        rref = self.ref[::-1]
+        if nref > 0:
+            l = len(rref)
+            for i in range(l, 20):
+                rref += 'A'
+        else:
+            rref = rref[0:-1]
+            l = len(rref)
+            for i in range(l, 20):
+                rref += 'F'
+        r = rref[::-1]
+        self.cover_ref = r
+        self.ref_code = [int(r[i]+r[i+1], 16) for i in range(len(r)) if i % 2 == 0]
+        # self.ref_code = [chr(int(r[i]+r[i+1], 16)) for i in range(len(r)) if i % 2 == 0]
+        self.ref_bytes = bytes(self.ref_code)
+        # print('%s' % ('abc' + str(self.ref_bytes)))
+
     def regist_info(self):
         tmp = {
             'comName':'HOPE',
@@ -50,6 +70,7 @@ class Regist(Net_info, Hp_post):
                 self.auth = str(ref['object']['authCode'])
                 self.ref = str(ref['object']['refrenceId'])
         print(self.auth, self.ref)
+        self.cover()
 
 
     def regist_attr(self):
@@ -80,6 +101,11 @@ class Regist(Net_info, Hp_post):
         }
         print(json.dumps(tmp, ensure_ascii=False, indent=4))
         print(self.post(tmp, api=self.apis['music']))
+    
+    def regist_all(self):
+        self.regist_mac()
+        self.regist_info()
+        self.regist_attr()
 
 
 
@@ -92,10 +118,11 @@ if __name__ == '__main__':
     # print(hp.post(s))
 
     reg = Regist()
-    reg.regist_mac()
-    reg.regist_info()
-    reg.regist_attr()
-    mus = Music(sys.argv[1])
-    reg.regist_music(mus.playlist)
+    # reg.regist_mac()
+    # reg.regist_info()
+    # reg.regist_attr()
+    reg.regist_all()
+    # mus = Music(sys.argv[1])
+    # reg.regist_music(mus.playlist)
     
     # mus = Music(sys.argv[1])
