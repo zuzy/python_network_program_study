@@ -1,6 +1,14 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-import json, re
+import json, re, os
+
+class R():
+    def __init__(self):
+        pass
+    @staticmethod
+    def exit():
+        os.system("kill -9 " + str(os.getpid())) #杀掉进程
+
 
 class divide():
     tab = {

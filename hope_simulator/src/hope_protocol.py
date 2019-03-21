@@ -6,40 +6,12 @@ from hope_regist import Regist
 from hope_utils import *
 from halo_cmd import *
 
-class Hope_loop(threading.Thread):
-    def __init__(self, timeout=100):
-        threading.Thread.__init__(self)
-
-        self.timeout = timeout
-        self.recv_dict = {}
-        self.send_dict = {}
-    def add_recv(self, name, handle):
-        self.recv_dict[handle.fd] = {
-            'name':name,
-            'handle':handle,
-            'time':time.time() * 1000,
-        }
-    def run(self):
-        while True:
-            timestamp = time.time()
-            in_list = []
-            for fd in self.recv_dict.keys():
-                in_list.append(fd)
-                tmp = self.recv_dict[fd]
-                if tmp['handle'].to and tmp['handle'].to > 0 and ((timestamp - tmp['time'])) > tmp['handle'].to:
-                    tmp['handle'].timeout()
-                    tmp['time'] = time.time() * 1000
-                    pass
-            infds, outfds, errfds = select.select(in_list, [], [], self.timeout / 1000)
-            if len(infds) > 0:
-                for i in infds:
-                    self.recv_dict[i]['handle'].recv()
-            
 class Std_handle(hp_utils):
     to = None
-    def __init__(self):
+    def __init__(self, music):
         hp_utils.__init__(self)
         self.fd = sys.stdin
+        self.mus = music
     def recv(self):
         try:
             cmd = self.fd.readline().strip('\n')
@@ -53,7 +25,8 @@ class Std_handle(hp_utils):
 class Client_handle(Regist, hp_utils):
     # type of device!
     tag = 0x01
-    def __init__(self, timeout=30000, serv=False):
+    def __init__(self, music, timeout=30000, serv=False):
+        self.mus = music
         self.to = timeout
         print('111')
         hp_utils.__init__(self)
@@ -118,29 +91,5 @@ class Client_handle(Regist, hp_utils):
             print(e)
             sys.exit()
 
-def main(argv):
-    try:
-        hope_handle = Hope_loop()
-        stdhandle = Std_handle()
-        hope_handle.add_recv('std', stdhandle)
-        tcphandle = Client_handle()
-        hope_handle.add_recv('client', tcphandle)
-        hope_handle.start()
-    except Exception as e:
-        print('main error', e)
-    
-    while True:
-        try:
-            time.sleep(100)
-        except:
-            sys.exit()
 
-
-if __name__ == '__main__':
-    # cli = Client_handle()
-    # # re = cli.package(0x8034, "12345\x7e\x7d")
-    # while True:
-    #     # time.sleep(1)
-    #     cli.recv()
-    main(sys.argv)
             
