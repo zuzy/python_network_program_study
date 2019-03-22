@@ -6,6 +6,7 @@ from hope_regist import Regist
 from hope_utils import *
 from halo_cmd import *
 from halo_parse import *
+from hope_parse import *
 
 class Std_handle(hp_utils):
     to = None
@@ -28,8 +29,36 @@ class Std_handle(hp_utils):
 class Client_handle(Regist, hp_utils):
     # type of device!
     tag = 0x01
+    cmd = {
+        'common':   0x01,
+        'heart':    0x02,
+        'exit':     0x03,
+        'identify': 0x04,
+        'ctrl':     0x10,
+        'list_new': 0x20,
+        'list_create':  0x30,
+        'list_rm':  0x40,
+        'list_add': 0x50,
+        'list_rmsong':  0x80,
+        'list_change':  0x125,
+
+        'area_scan':    0x60,
+        'area_ctrl':    0x70,
+        'area_vol': 0x195,
+
+        'scene_new':    0x90,
+        'scene_rule':   0x100,
+        'scene_rm': 0x185,
+
+        'unbind':   0x215,
+        'event':    0x230,
+        'tts':  0x250,
+        'ttschk':   0x260,
+    }
+
     def __init__(self, music, timeout=30000, serv=False):
         self.mus = music
+        self.parse = Hope_parse(self.mus)
         self.to = timeout
         print('111')
         hp_utils.__init__(self)
@@ -52,7 +81,14 @@ class Client_handle(Regist, hp_utils):
         tmp = {
             'code':self.auth
         }
-        self.fd.send((self.package(0x04, json.dumps(tmp))))
+        self.fd.send(self.package(self.cmd['identify'], json.dumps(tmp)))
+
+    def heartbeat(self):
+        self.fd.send(self.package(self.cmd['heart'], ''))
+
+    def update_status(self):
+        self.fd.send(self.package(self.cmd['ctrl'], 'status'))
+        pass
 
     def package(self, cmd, body):
         ret = self.toword(cmd)
@@ -80,6 +116,7 @@ class Client_handle(Regist, hp_utils):
         div = divide(data)
         m = iter(div)
         cmd = [x for x in m]
+        print(cmd)
         return cmd[1], cmd[5]
 
     def recv(self):
@@ -88,11 +125,15 @@ class Client_handle(Regist, hp_utils):
             print('recv data', data)
             d = self.unescape(data)
             cmd, body = self.dispatch(d)
-            print(body[:-1].decode())
-
+            body = body[:-1].decode()
+            print('%x' % cmd, body)
+            self.parse.parse(cmd, body)
         except Exception as e:
             print(e)
             sys.exit()
+    
+    def timeout(self):
+        pass
 
 
             

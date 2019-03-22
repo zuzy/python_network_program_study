@@ -52,8 +52,8 @@ def main(argv):
         mus.show_list()
         stdhandle = Std_handle(mus)
         hope_handle.add_recv('std', stdhandle)
-        # tcphandle = Client_handle(mus)
-        # hope_handle.add_recv('client', tcphandle)
+        tcphandle = Client_handle(mus)
+        hope_handle.add_recv('client', tcphandle)
     except Exception as e:
         print('main error', e)
         R.exit()

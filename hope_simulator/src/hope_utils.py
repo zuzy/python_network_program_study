@@ -17,7 +17,6 @@ class divide():
         'dw':4,
         dict:False,
     }
-
     def __init__(self, payload, step=['b','w','b','w', 10, b'\x7e']):
         self.payload = type(payload) == str and payload.encode() or payload
         self.step = step
@@ -34,27 +33,17 @@ class divide():
         ret = ''
         if t in self.tab:
             length = self.tab[t]
-            # print('len:',length)
             for i in range(length):
-                # print(self.payload[i], type(self.payload[i]))
                 ret += '%02x' % self.payload[i]
-            # print(ret)
             self.payload = self.payload[length:]
             ret = int(ret, 16)
-            # print(ret, "%x" % ret)
+
         elif type(t) == int:
             for i in range(t):
                 ret += '%02x' % self.payload[i]
             self.payload = self.payload[t:]
         elif type(t) == bytes:
             print(t)
-            # m = re.match(t, self.payload.decode(), re.I|re.M)
-            # print(t)
-            # if m:
-            #     ret = m.group()
-            #     length = len(ret)
-            #     ret = ret[:-1]
-            #     self.payload = self.payload[length:]
             s = self.payload.find(t)
             if s > 0:
                 ret = self.payload[:s]
@@ -125,8 +114,6 @@ class hp_utils():
                     return None
                 en = False
         return ret
-        
-
         
 
 if __name__ == '__main__':
