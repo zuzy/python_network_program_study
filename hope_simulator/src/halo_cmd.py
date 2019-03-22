@@ -71,6 +71,12 @@ halo_cmd = {
         COMMENT:'voice_speak\n\tvoice speak\n\tvoice_speak: speaking_string'
     },
 
+    'stop': {
+        ARGNUM:1,
+        CMD:json.dumps({CMD:'control',PARAMS:{'playstate':'stop'}}),
+        COMMENT:'stop\n\tstop the music'
+    },
+
     'pause': {
         ARGNUM:1,
         CMD:json.dumps({CMD:'control',PARAMS:{'playstate':'pause'}}),
@@ -103,7 +109,7 @@ halo_cmd = {
     },
     'mode':{
         ARGNUM:2,
-        CMD:json.dumps({CMD:'control',PARAMS:{'volume':'%s'}}),
+        CMD:json.dumps({CMD:'control',PARAMS:{'mode':'%s'}}),
         COMMENT:'mode\n\tthe repeation of music player\n\tmode:[random/single/cycle/list]'
     },
     'source': {

@@ -32,7 +32,7 @@ class Music(threading.Thread):
         'state':status['none'],
         'loop':loop['none'],
         'pos':-1,
-        'vol':50,
+        'vol':0.1,
         'music':{}
     }
     enmixer = False
@@ -49,12 +49,13 @@ class Music(threading.Thread):
         self.playlist = []
         index = 0
         mixer.init()
+        self.setvol(self.state['vol'] * 100)
         self.enmixer = True
         for p in playlist:
             p = p.strip()
             m = re.match('.*(mp3|wma|ogg|ape|flac|wav|aif|aac|m4a|ram|amr)$', p, re.I)
             if m is not None:
-                self.playlist.append(self.info(p, index))
+                self.playlist.append(self._info(p, index))
                 index += 1
         # print(json.dumps(self.playlist, ensure_ascii=False, indent=4))
 
@@ -132,9 +133,11 @@ class Music(threading.Thread):
     
     def _manager_status(self):
         st = self.state['state']
+        g_lock.acquire()
         busy = mixer.music.get_busy()
-        self.state['vol'] = int(mixer.music.get_volume() * 100)
-        print('state vol', self.state['vol'])
+        self.state['vol'] = mixer.music.get_volume()
+        g_lock.release()
+        # print('state vol', self.state['vol'])
         if st == status['none']:
             if busy:
                 pos = mixer.music.get_pos()
@@ -179,20 +182,17 @@ class Music(threading.Thread):
         # self.init()
         # self.play()
         while True:
-            time.sleep(0.5)
+            time.sleep(0.25)
             if self.enmixer:
                 self._manager_status()
             # else:
             #     self.enmixer = True
             #     mixer.init()
 
-    def update(self, auth, ref):
-        pass
-
     def name_from_path(self, path):
         return path.split('/')[-1].split('.')[0]
 
-    def info(self, path, index):
+    def _info(self, path, index):
         # audiofile = eyed3.load("song.mp3")
         info = {
             'path':path
@@ -213,45 +213,73 @@ class Music(threading.Thread):
     def show_list(self):
         for p in self.playlist:
             print("------%d------\n%s\nduration %d\n" % (p['musicId'], p['musicName'], p['musicTime']))
-
-    def play(self, path=None, index=0, name=None):
     
-        mixer.quit()
-        self.enmixer = False
+    def info(self, index=None):
+        if index == None:
+            return self.state
+        else:
+            return self.playlist[index]
+
+
+    def play(self, path=None, index=None, name=None):
+    
         print(path, index, name)
-        if path is None and name is None :
+        if path is None and name is None and index == None :
+            if self.state['state'] == status['play']:
+                return
+            elif self.state['state'] == status['pause']:
+                self.resume()
+                return
+            else:
+                index = 0
+        
+        if index != None:
+            self.enmixer = False
             length = len(self.playlist) - 1
             if index > length:
                 index = index % length
-            print(index, len(self.playlist))
-            print(self.playlist[index]['path'])
-            print('to set frequency', self.playlist[index]['freq'])
+            # print(index, len(self.playlist))
+            # print(self.playlist[index]['path'])
+            # print('to set frequency', self.playlist[index]['freq'])
+            freq = self.playlist[index]['freq']
             g_lock.acquire()
-            mixer.init(frequency=self.playlist[index]['freq'])
+            if 'freq' not in self.state['music'] or freq != self.state['music']['freq']:
+                mixer.quit()
+                mixer.init(frequency=self.playlist[index]['freq'])
             mixer.music.load(self.playlist[index]['path'])
             self.state['music'] = self.playlist[index]
             g_lock.release()
+
         elif path is not None:
             audiofile = eyed3.load(path)
             g_lock.acquire()
-            mixer.init(frequency=audiofile.info.sample_freq) 
+            freq = audiofile._info.sample_freq
+            if 'freq' not in self.state['music'] or freq != self.state['music']['freq']:
+                mixer.quit()
+                mixer.init(freq)
             mixer.music.load(path)
-            self.state['music'] = path
             g_lock.release()
+            self.state['music'] = {}
+            self.state['music']['path'] = path
+            self.state['music']['freq'] = freq
         elif name is not None:
             for p in self.playlist:
                 if name == p['musicName'] or name == p['displayName']:
+                    freq = p['freq']
                     g_lock.acquire()
-                    mixer.init(frequency=p['freq'])             
+                    if 'freq' not in self.state['music'] or freq != self.state['music']['freq']:
+                        mixer.quit()
+                        mixer.init(frequency=p['freq'])             
                     mixer.music.load(p['path'])
-                    self.state['music'] = p
                     g_lock.release()
+                    self.state['music'] = p
                     break
         # print(" start to play ")
         self.enmixer = True
         g_lock.acquire()
         mixer.music.play()
-        self.setvol(self.state['vol'])
+        print('play && vol to set',self.state['vol'])
+        self.setvol(self.state['vol'] * 100)
         g_lock.release()
     
     def pause(self):
@@ -270,16 +298,16 @@ class Music(threading.Thread):
         g_lock.release()
     
     def next(self):
-        self._manager_next(True)
+        self._manager_next(force=True)
         pass
 
     def setvol(self, vol):
         print('setvol ', vol, vol/100)
-        self.state['vol'] = vol
-        mixer.music.set_volume(float(vol)/100)
+        self.state['vol'] = float(vol)/100
+        mixer.music.set_volume(self.state['vol'])
 
     def inc_vol(self):
-        vol = self.state['vol']
+        vol = self.state['vol'] * 100
         print('inc!!!')
         print(vol)
         vol += 10
@@ -290,7 +318,7 @@ class Music(threading.Thread):
         self.setvol(vol)
 
     def dec_vol(self):
-        vol = self.state['vol']
+        vol = self.state['vol'] * 100
         vol -= 10
         vol = (vol < 0 and 0) or vol
         print('decvol', vol)
@@ -313,6 +341,7 @@ class Music(threading.Thread):
     
     def loop_mode(self, mode):
         if mode in loop:
+            print('!!!! to set mdoe ', mode)
             self.state['loop'] = loop[mode]
         pass
     
@@ -320,39 +349,19 @@ class Music(threading.Thread):
     
 
 if __name__ == '__main__':
-    if True:
-        mus = Music(sys.argv[1])
-        mus.show_list()
-        # mus.play(index=7)
-        mus.play(index=1)
-        mus.loop_mode('repeat_all')
-        # mus.play(name='新写的旧歌')
-        mus.start()
-        # mus.setvol(0)
-    else:
-        mixer.init()
-        mixer.music.load(sys.argv[1])
-        mixer.music.play()
+
+    mus = Music(sys.argv[1])
+    mus.show_list()
+    # mus.play(index=7)
+    mus.play(index=0)
+    # mus.loop_mode('repeat_all')
+    mus.loop_mode('repeat_one')
+    # mus.play(name='新写的旧歌')
+    mus.start()
+    # mus.setvol(0)
     time.sleep(5)
-    # mus.next()
+    mus.prev()
     while True:
-        # mus.dec_vol()
-        # mus.inc_vol()
-        # mus.setvol(10)
-        mus.prev()
         time.sleep(5)
-        # mus.setvol(100)
-        # time.sleep(5)
-        # mus.stop()
-        # mus.next()
-        # time.sleep(2)
-        # mus.resume()
-        # time.sleep(5)
-        # mus.stop()
-        # time.sleep(5)
-        # mus.pause()
-        # mus.resume()
-    # mus.update()
-    # for p in mus.playlist:
-    #     mus.info(p)
-    # mus.info('')
+
+ 

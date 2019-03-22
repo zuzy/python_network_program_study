@@ -5,6 +5,7 @@ import socket, time, select, sys, json, threading, os
 from hope_regist import Regist
 from hope_utils import *
 from halo_cmd import *
+from halo_parse import *
 
 class Std_handle(hp_utils):
     to = None
@@ -12,6 +13,7 @@ class Std_handle(hp_utils):
         hp_utils.__init__(self)
         self.fd = sys.stdin
         self.mus = music
+        self.parse = Halo_parse(self.mus)
     def recv(self):
         try:
             cmd = self.fd.readline().strip('\n')
@@ -21,6 +23,7 @@ class Std_handle(hp_utils):
             pass
         s = parse_cmd(cmd)
         print(s)
+        self.parse.parse(s)
 
 class Client_handle(Regist, hp_utils):
     # type of device!
