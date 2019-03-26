@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import json
+
 '''
 command
 
@@ -67,32 +69,174 @@ class Hope_parse():
         print('heartbeat reply')
         pass
 
+    def _ctrl_status(self, val):
+        print('status, ', val)
+        v = int(val)
+        if v == 0:
+            self.mus.pause()
+        elif v == 1:
+            self.mus.play()
+        else:
+            self.mus.stop()
+        pass
+
+    def _ctrl_play(self, val):
+        print('play', val)
+        self.mus.play(index=int(val))
+        pass
+
+    def _ctrl_music(self, val):
+        print('music', val)
+        self.mus.play(name=val)
+        pass
+
+    def _ctrl_cata(self, val):
+        print('cata', val)
+        pass
+    
+    def _ctrl_bell(self, val):
+        print('bell contorl', val)
+        pass
+
+    def _ctrl_control(self, val):
+        v = int(val)
+        if v == 0:
+            print('prev')
+            self.mus.prev()
+        elif v == 1:
+            print('next')
+            self.mus.next()
+        else:
+            print('no support control', val)
+        pass
+
+    def _ctrl_skip(self, val):
+        print('skip to', val)
+        self.mus.skip(int(val))
+        pass
+
+    def _ctrl_idvol(self, val):
+        val = int(val)
+        print('contorl volume', val)
+        if val == 0:
+            self.mus.dec_vol()
+        else:
+            self.mus.inc_vol()
+        pass
+    
+    def _ctrl_mute(self, val):
+        self.mus.setvol(0)
+        print('mute!', val)
+        pass
+    
+    def _ctrl_setvol(self, val):
+        # vol = float(val) * 100
+        vol = int(val)
+        print('control vol', val, vol)
+        self.mus.setvol(int(vol))
+        pass
+    
+    def _ctrl_source(self, val):
+        print('no support source control', val)
+        pass
+
+    def _ctrl_effect(self, val):
+        print('no support effect control', val)
+        pass
+    
+    def _ctrl_model(self, val):
+        model = {
+            1:'random',
+            2:'repeat_all',
+            3:'repeat_one',
+            4:'sequence',
+        }
+        v = int(val)
+        if v in model:
+            self.mus.loop_mode(model[v])
+            print('loop', v, model[v])
+        pass
+    
+    def _ctrl_locale(self, val):
+        print('locale', val)
+        pass
+
     def ctrl(self, body):
+        print('common ctrl!')
+        cmd_tab = json.loads(body)
+        ctrl_dict = {
+            'status':self._ctrl_status,
+            'play':self._ctrl_play,
+            'music':self._ctrl_music,
+            'cata':self._ctrl_cata,
+            'bell':self._ctrl_bell,
+            'control':self._ctrl_control,
+            'skip':self._ctrl_skip,
+            'idvol':self._ctrl_idvol,
+            'mute':self._ctrl_mute,
+            'setvol':self._ctrl_setvol,
+            'source':self._ctrl_source,
+            'effect':self._ctrl_effect,
+            'model':self._ctrl_model,
+            'locale':self._ctrl_locale,
+        }
+        print(json.dumps(cmd_tab), 'parse!!!')
+        if 'profile' in cmd_tab:
+            profile = cmd_tab['profile']
+            print('profile', json.dumps(profile))
+            for k, v in ctrl_dict.items():
+                if k in profile:
+                    v(profile[k])
         pass
     
     def event(self, body):
+        cmd = json.loads(body)
+        if 'content' not in cmd:
+            print('event error without content', body)
+        content = cmd['content']
+        tokenid = content['tokenId']
+        print('get token id ', tokenid)
+            
         pass
      
     def plist(self, body):
+        cmd = json.loads(body)
+        # print('plist\n', json.dumps(cmd, ensure_ascii=False, indent=4))
+        if 'musId' in cmd:
+            index = int(cmd['musId'])
+            self.mus.play(index=index)
         pass
 
     def batchsong(self, body):
+        cmd = json.loads(body)
+        print('batch song ctontrol, ', body)
         pass
     
     def info(self, body):
+        print('check up info')
         pass
 
     def specifyplay(self, body):
+        print('specify play', body)
+        cmd = json.loads(body)
+        if 'musIds' not in body:
+            print('specify play illegal')
+            return
+        musIds = cmd['musIds']
+        index = musIds.split(',')[0]
+        self.mus.play(index=int(index))
         pass
     
     def tts(self, body):
+        print('unsupport tts ctrl', body)
         pass
     
     def checkinfo(self, body):
+        print('unsupport, tts check info')
         pass
 
     def parse(self, cmd, body):
-        cmd &= 0x7f
+        cmd &= 0x7fff
         mmap = {
             0x01:   self.common_reply,
             0x02:   self.heart_reply,

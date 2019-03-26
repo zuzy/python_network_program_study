@@ -10,16 +10,16 @@ from pygame import mixer
 loop = {
     'none':-1,
     'once':0,
-    'sequence':1,
-    'repeat_one':2,
-    'repeat_all':3,
-    'random':4,
+    'sequence':4,
+    'repeat_one':3,
+    'repeat_all':2,
+    'random':1,
 }
 
 status = {
-    'none':-1,
-    'play':0,
-    'pause':1,
+    'none':3,
+    'play':1,
+    'pause':0,
     'stop':2,
 }
 
@@ -30,7 +30,7 @@ class Music(threading.Thread):
     api = '/hopeApi/music/initial'
     state = {
         'state':status['none'],
-        'loop':loop['none'],
+        'loop':loop['once'],
         'pos':-1,
         'vol':0.1,
         'music':{}
@@ -203,11 +203,12 @@ class Music(threading.Thread):
         info['albumName'] = audiofile.tag.album or self.unknow
         info['musicName'] = self.name_from_path(path)
         info['displayName'] = audiofile.tag.title or info['musicName']
-        info['musicTime'] = int(audiofile.info.time_secs * 1000)
+        # info['musicTime'] = int(audiofile.info.time_secs * 1000)
+        info['musicTime'] = int(audiofile.info.time_secs)
         info['musicSize'] = audiofile.info.size_bytes
         info['musicId'] = index
         info['freq'] = audiofile.info.sample_freq
-        # print(audiofile.info.time_secs)
+        print(audiofile.info.time_secs)
         return info
     
     def show_list(self):
@@ -247,8 +248,8 @@ class Music(threading.Thread):
                 mixer.quit()
                 mixer.init(frequency=self.playlist[index]['freq'])
             mixer.music.load(self.playlist[index]['path'])
-            self.state['music'] = self.playlist[index]
             g_lock.release()
+            self.state['music'] = self.playlist[index]
 
         elif path is not None:
             audiofile = eyed3.load(path)
@@ -300,6 +301,12 @@ class Music(threading.Thread):
     def next(self):
         self._manager_next(force=True)
         pass
+    
+    def skip(self, pos):
+        # g_lock.acquire()
+        # mixer.music.set_pos(float(pos) / 1000)
+        # g_lock.release()
+        print('cannot skip')
 
     def setvol(self, vol):
         print('setvol ', vol, vol/100)
@@ -363,5 +370,6 @@ if __name__ == '__main__':
     mus.prev()
     while True:
         time.sleep(5)
+        mus.skip(12)
 
  

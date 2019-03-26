@@ -5,6 +5,8 @@ import json, sys, os, re, binascii
 from hope_post  import Hp_post
 from hope_netif import *
 from hope_music import *
+from hope_utils import *
+import qrcode
 
 class Regist(Net_info, Hp_post):
     apis = {
@@ -13,15 +15,17 @@ class Regist(Net_info, Hp_post):
         'attr' : '/hopeApi/device/status',
         'music' : '/hopeApi/music/initial',
     }
-    def __init__(self):
+    # def __init__(self):
+    def __init__(self, cid='881256532942016512', sid='750837261197414400', key='0CF9DE03AF1C46F9A970AB27120A91D2', ver='1.0', uri='http://192.168.2.9:8080'):
         Net_info.__init__(self)
-        Hp_post.__init__(self)
+        Hp_post.__init__(self, cid, sid, key, ver, uri)
         # print(self.mac)
 
     def regist_mac(self):
         tmp = {
+            # 'deviceGuid':'10:D0:7A:74:8C:1D',
             'deviceGuid':self.mac,
-            'deviceSN':'70368170428025',
+            'deviceSN':self.get_sn(),
         }
         print(self.post(tmp, api=self.apis['mac']))
         # self.post(tmp, api=self.apis['mac'])
@@ -49,7 +53,7 @@ class Regist(Net_info, Hp_post):
     def regist_info(self):
         tmp = {
             'comName':'HOPE',
-            'deviceSN':'73001804123020',
+            'deviceSN':self.get_sn(),
             'deviceName':'HOPE-Q3',
             'deviceCata':'Q3',
             'firmVersion':'ats3605-debug-0.1',
@@ -91,7 +95,7 @@ class Regist(Net_info, Hp_post):
             }
         }
         print(self.post(tmp, api=self.apis['attr']))
-        # self.post(tmp, api=self.apis['attr'])
+        self.post(tmp, api=self.apis['attr'])
     
     def regist_music(self, playlist):
         tmp = {
@@ -101,11 +105,25 @@ class Regist(Net_info, Hp_post):
         }
         print(json.dumps(tmp, ensure_ascii=False, indent=4))
         print(self.post(tmp, api=self.apis['music']))
-    
+
     def regist_all(self):
         self.regist_mac()
         self.regist_info()
         self.regist_attr()
+        code = {
+            'comName':'HOPE',
+            'deviceCata':'Q3',
+            'deviceName':'HOPE-Q3',
+            'parentId':'753396045774098432',
+            'playerType':'_test',
+            'deviceSN':self.get_sn(),
+            # 'uuid':'9FCDE6963E830630F13B285B5417DB18',
+        }
+        print('qrcode :\n', json.dumps(code, ensure_ascii=False, indent=4))
+        img = qrcode.make(json.dumps(code, ensure_ascii=False))
+        print(type(img), img)
+        img.save('dev_addition.png')
+        
 
 
 
@@ -122,7 +140,7 @@ if __name__ == '__main__':
     # reg.regist_info()
     # reg.regist_attr()
     reg.regist_all()
-    # mus = Music(sys.argv[1])
-    # reg.regist_music(mus.playlist)
+    mus = Music(sys.argv[1])
+    reg.regist_music(mus.playlist)
     
     # mus = Music(sys.argv[1])

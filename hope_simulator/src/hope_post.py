@@ -45,6 +45,7 @@ class Hp_post():
         # print('api', api)
         # print('dat', target)
         resp = requests.post(self.uri+api, data=data)
+        # print('post data', json.dumps(data, ensure_ascii=False, indent=4))
         return resp.status_code, resp.text
 
 if __name__ == "__main__":

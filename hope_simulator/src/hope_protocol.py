@@ -25,6 +25,9 @@ class Std_handle(hp_utils):
         s = parse_cmd(cmd)
         print(s)
         self.parse.parse(s)
+    def update(self, enid):
+        info = self.mus.info()
+        json.dump(info, sys.stdout, ensure_ascii=False, indent=4)
 
 class Client_handle(Regist, hp_utils):
     # type of device!
@@ -60,22 +63,36 @@ class Client_handle(Regist, hp_utils):
         self.mus = music
         self.parse = Hope_parse(self.mus)
         self.to = timeout
-        print('111')
-        hp_utils.__init__(self)
-        Regist.__init__(self)
-        self.regist_all()
-        print('111')
         if serv:
+            Regist.__init__(self, uri='http://open.nbhope.cn')
             self.host, self.port = 'open.nbhope.cn', 6666
         else:
+            Regist.__init__(self)
             self.host, self.port = '192.168.2.9', 8888
+        hp_utils.__init__(self)
+        self.regist_all()
+        # self.regist_music(self.mus.playlist)
+        self.update_playlist()
         self.conn()
+        print('connok')
+
+    def update_playlist(self):
+        playlist = []
+        for v in self.mus.playlist:
+            tt = v.copy()
+            del tt['freq']
+            del tt['musicSize']
+            del tt['path']
+            playlist.append(tt)
+        json.dump(playlist, sys.stdout, ensure_ascii=False, indent=4)
+        self.regist_music(playlist)
 
     def conn(self):
         self.fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.fd.connect((self.host, self.port))
         self.fd.setblocking(0)
         self.identify()
+        self.heartbeat()
 
     def identify(self):
         tmp = {
@@ -96,44 +113,71 @@ class Client_handle(Regist, hp_utils):
         if type(body) == str:
             body = body.encode(encoding='ascii')
         # length is hex length not the char length! .....fuck b-e
+        print('length is %d', len(body) * 2)
         ret += self.toword(len(body) * 2)
         ret += self.ref_bytes
         ret += body
         chk = 0
         for r in ret:
             chk ^= r
-        print('chk final %x' %chk)
         ret += self.tobyte(chk)
-        print(ret)
         ret = self.escape(ret)
-        print('es', ret)
         ret += b'\x7e'
         ret = b'\x7e' + ret
-        print('pkg', ret)
         return ret
     
     def dispatch(self, data):
         div = divide(data)
         m = iter(div)
         cmd = [x for x in m]
-        print(cmd)
-        return cmd[1], cmd[5]
+        return cmd[1], cmd[5], cmd[6]
 
     def recv(self):
         try:
             data = self.fd.recv(1024)
-            print('recv data', data)
+            # print('recv data', data)
+            if len(data) == 0:
+                print('connection error!')
+                R.exit()
             d = self.unescape(data)
-            cmd, body = self.dispatch(d)
-            body = body[:-1].decode()
-            print('%x' % cmd, body)
-            self.parse.parse(cmd, body)
+            while len(d) > 0:
+                cmd, body, d = self.dispatch(d)
+                if body and len(body) > 0:
+                    body = body[:-1].decode()
+                    print('%x' % cmd, body)
+                    self.parse.parse(cmd, body)
+            print('parse end!!!')
         except Exception as e:
             print(e)
             sys.exit()
     
     def timeout(self):
-        pass
+        # print('hope tcp timeout !!!')
+        self.heartbeat()
+        
+    def update(self, id=False):
+        state = self.mus.info()
+        tmp = {
+            'status':True,
+            'error':5000,
+            'profile':{
+                'status':state['state'],
+                'skip':state['pos'],
+                'setvol':int(state['vol']*100),
+                'model':state['loop'],
+                'source':1,
+                'locale':0,
+            }
+        }
+        if id:
+            if 'musicId' in state['music']:
+                tmp['profile']['play'] = tmp['musId'] = state['music']['musicId']
+            if 'musicName' in state['music']:
+                tmp['music'] = state['music']['musicName']
+        pkg = self.package(self.cmd['ctrl'], json.dumps(tmp))
+        print("tcp update body", pkg)
+        self.fd.send(pkg)
+        # self.fd.send(self.package(self.cmd['ctrl'], json.dumps(tmp)))
 
 
             

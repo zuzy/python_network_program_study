@@ -10,25 +10,67 @@ from hope_music import *
 
 # class Hope_loop(threading.Thread):
 class Hope_loop():
-    def __init__(self, timeout=100):
+    info = None
+    def __init__(self, mus, timeout=100):
         # threading.Thread.__init__(self)
-
+        self.mus = mus
         self.timeout = timeout
         self.recv_dict = {}
         self.send_dict = {}
+        self.timeout_dict = {}
     def add_recv(self, name, handle):
         self.recv_dict[handle.fd] = {
             'name':name,
             'handle':handle,
             'time':time.time() * 1000,
         }
+
+    def _manager(self):
+        info = self.mus.info()
+        en = False
+        enid = False
+        if self.info == None:
+            en = enid = True
+            print('en enid is true')
+        else:
+            for k, v in info.items():
+                # if type(v) == dict:
+                if k == 'music':
+                    if 'musicId' in v :
+                        if 'musicId' in self.info[k]:
+                            if v['musicId'] != self.info[k]['musicId']:
+                                print('music changed !!!')
+                                en = enid = True
+                        else:
+                            en = enid = True
+                elif k == 'pos':
+                    if v - self.info[k] > 1000 or self.info[k] > v:
+                        print('skip !!!')
+                        en = True
+                else:
+                    if v != self.info[k]:
+                        print(k, 'changed !!!', v)
+                        en = True
+            
+        if en:
+            print('update!!!!!!!!', enid)
+            self.info = info.copy()
+            for tmp in self.recv_dict.values():
+                print(tmp['handle'].update)
+                # if 'attribute' in tmp['handle']:
+                if tmp['handle'].update != None:
+                    tmp['handle'].update(enid)
+        
+        self.info['pos'] = info['pos']
+
+        pass
+        
     def run(self):
         while True:
-            timestamp = time.time()
+            timestamp = time.time() * 1000
             in_list = []
-            for fd in self.recv_dict.keys():
+            for fd, tmp in self.recv_dict.items():
                 in_list.append(fd)
-                tmp = self.recv_dict[fd]
                 if tmp['handle'].to and tmp['handle'].to > 0 and ((timestamp - tmp['time'])) > tmp['handle'].to:
                     tmp['handle'].timeout()
                     tmp['time'] = time.time() * 1000
@@ -42,17 +84,20 @@ class Hope_loop():
                 for i in infds:
                     self.recv_dict[i]['handle'].recv()
             else: 
-                # print('timeout !', time.time())
                 pass
+            # print('timeout !', time.time())
+            self._manager()
+
 
 def main(argv):
     try:
-        hope_handle = Hope_loop()
         mus = Music(argv[1])
         mus.show_list()
+        hope_handle = Hope_loop(mus)
         stdhandle = Std_handle(mus)
         hope_handle.add_recv('std', stdhandle)
-        tcphandle = Client_handle(mus)
+        tcphandle = Client_handle(mus, serv=True)
+        # tcphandle = Client_handle(mus, serv=False)
         hope_handle.add_recv('client', tcphandle)
     except Exception as e:
         print('main error', e)

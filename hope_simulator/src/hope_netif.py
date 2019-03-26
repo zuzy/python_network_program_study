@@ -15,6 +15,12 @@ class Net_info():
         net = info[self.adapter]
         self.ip = net[0].address
         self.mac = net[2].address
+    def get_sn(self):
+        return '73001804123020'
+        # return '74001806140063'
+
+    def get_uuid(self):
+        return '9FCDE6963E830630F13B285B5417DB18'
 
     
 nf = Net_info()
