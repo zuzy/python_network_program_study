@@ -117,7 +117,7 @@ class Regist(Net_info, Hp_post):
             'parentId':'753396045774098432',
             'playerType':'_test',
             'deviceSN':self.get_sn(),
-            # 'uuid':'9FCDE6963E830630F13B285B5417DB18',
+            'uuid':'9FCDE6963E830630F13B285B5417DB18',
         }
         print('qrcode :\n', json.dumps(code, ensure_ascii=False, indent=4))
         img = qrcode.make(json.dumps(code, ensure_ascii=False))

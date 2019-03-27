@@ -41,6 +41,7 @@ class Music(threading.Thread):
         super().__init__()
         self.path = mus_path
         self.init()
+        pygame.init()
         
     def init(self):
         f = os.popen('find %s|sort' % self.path)
@@ -137,7 +138,7 @@ class Music(threading.Thread):
         busy = mixer.music.get_busy()
         self.state['vol'] = mixer.music.get_volume()
         g_lock.release()
-        # print('state vol', self.state['vol'])
+        # print('state vol', self.state['vol'], 'status',st)
         if st == status['none']:
             if busy:
                 pos = mixer.music.get_pos()
@@ -223,7 +224,7 @@ class Music(threading.Thread):
 
 
     def play(self, path=None, index=None, name=None):
-    
+        
         print(path, index, name)
         if path is None and name is None and index == None :
             if self.state['state'] == status['play']:
@@ -234,6 +235,7 @@ class Music(threading.Thread):
             else:
                 index = 0
         
+        print('play start here')
         if index != None:
             self.enmixer = False
             length = len(self.playlist) - 1
@@ -244,20 +246,21 @@ class Music(threading.Thread):
             # print('to set frequency', self.playlist[index]['freq'])
             freq = self.playlist[index]['freq']
             g_lock.acquire()
-            if 'freq' not in self.state['music'] or freq != self.state['music']['freq']:
-                mixer.quit()
-                mixer.init(frequency=self.playlist[index]['freq'])
+            # if 'freq' not in self.state['music'] or freq != self.state['music']['freq']:
+                # mixer.quit()
+            mixer.pre_init(frequency=self.playlist[index]['freq'], buffer=self.playlist[index]['musicSize'])
             mixer.music.load(self.playlist[index]['path'])
             g_lock.release()
             self.state['music'] = self.playlist[index]
-
+            print('index is not none')
         elif path is not None:
             audiofile = eyed3.load(path)
             g_lock.acquire()
-            freq = audiofile._info.sample_freq
-            if 'freq' not in self.state['music'] or freq != self.state['music']['freq']:
-                mixer.quit()
-                mixer.init(freq)
+            # freq = audiofile.info.sample_freq
+            # if 'freq' not in self.state['music'] or freq != self.state['music']['freq']:
+                # mixer.quit()
+                # mixer.pre_init(freq)
+            mixer.pre_init(frequency=audiofile.info.sample_freq, buffer=audiofile.info.size_bytes)
             mixer.music.load(path)
             g_lock.release()
             self.state['music'] = {}
@@ -266,22 +269,27 @@ class Music(threading.Thread):
         elif name is not None:
             for p in self.playlist:
                 if name == p['musicName'] or name == p['displayName']:
-                    freq = p['freq']
+                    # freq = p['freq']
                     g_lock.acquire()
-                    if 'freq' not in self.state['music'] or freq != self.state['music']['freq']:
-                        mixer.quit()
-                        mixer.init(frequency=p['freq'])             
+                    # if 'freq' not in self.state['music'] or freq != self.state['music']['freq']:
+                        # mixer.quit()
+                    mixer.pre_init(frequency=p['freq'], buffersize=p['musicSize'])
                     mixer.music.load(p['path'])
                     g_lock.release()
                     self.state['music'] = p
                     break
+            else:
+                print(name, 'is not in play list')
+                return
         # print(" start to play ")
         self.enmixer = True
+        time.sleep(0.1)
         g_lock.acquire()
         mixer.music.play()
         print('play && vol to set',self.state['vol'])
         self.setvol(self.state['vol'] * 100)
         g_lock.release()
+        print('play end here')
     
     def pause(self):
         g_lock.acquire()
@@ -361,15 +369,18 @@ if __name__ == '__main__':
     mus.show_list()
     # mus.play(index=7)
     mus.play(index=0)
-    # mus.loop_mode('repeat_all')
-    mus.loop_mode('repeat_one')
+    mus.loop_mode('repeat_all')
+    # mus.loop_mode('repeat_one')
+    # mus.loop_mode('random')
     # mus.play(name='新写的旧歌')
     mus.start()
     # mus.setvol(0)
-    time.sleep(5)
-    mus.prev()
+    time.sleep(1)
+    # mus.prev()
     while True:
-        time.sleep(5)
-        mus.skip(12)
+        # time.sleep(0.5)
+        mus.next()
+        # time.sleep(1)
+        # mus.stop()
 
  
