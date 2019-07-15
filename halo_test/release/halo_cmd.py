@@ -8,6 +8,14 @@ COMMENT = 'comment'
 PARAMS = 'params'
 ARGNUM = 'argnum'
 
+halo_cmd_tunnel = {
+    'tunnel': {
+        ARGNUM:3,
+        CMD:json.dumps({CMD:'control',PARAMS:{ 'tunnels': { 'id':'%d', 'enable': '%s'}}}),
+        COMMENT:'tunnel\n\tchange the tunnel of dev\n\tsource:[num]:[y/n]'
+    },
+}
+
 halo_cmd_bool = {
     'power':{
         ARGNUM:2,
@@ -110,7 +118,8 @@ halo_cmd = {
         ARGNUM:2,
         CMD:json.dumps({CMD:'control',PARAMS:{'source':'%s'}}),
         COMMENT:'source\n\tchange the source of dev\n\tsource:[local/bluetooth/linein]'
-    }
+    },
+
 }
 
 def help(cmd_list):
@@ -132,6 +141,8 @@ def help(cmd_list):
             print(halo_cmd[cmd][COMMENT])
         elif cmd in halo_cmd_bool:
             print(halo_cmd_bool[cmd][COMMENT])
+        elif cmd in halo_cmd_tunnel:
+            print(halo_cmd_tunnel[cmd][COMMENT])
         else:
             print('cmd[%s] is not support' % cmd)
     return None
@@ -175,11 +186,35 @@ def parse_bool(cmd_list, data):
         print(e)
         return None
 
+def parse_tunnel(cmd_list, data) :
+    try:
+        length = len(cmd_list)
+        print(cmd_list)
+        cmd = cmd_list[0]
+        if length != halo_cmd_tunnel[cmd][ARGNUM]:
+            raise Exception('cmd[%s] is illeagal\n%s' %(data, halo_cmd[cmd][COMMENT]))
+        
+        arg1 = int(cmd_list[1].strip())
+        arg2 = cmd_list[2].strip()
+        print(arg2)
+        b = False
+        if arg2 == 'y' or arg2 == 'Y':
+            b = True
+        elif arg2 == 'n' or arg2 == 'N':
+            b = False
+        else:
+            raise Exception("tunnel is illegal\n")
+        print('111231', arg1, arg2, b)
+        return json.dumps({CMD:'control', PARAMS:{'tunnels': [{'id':arg1, 'enable':b},]}}) + '\n'
+    except Exception as e:
+        print(e)
+        return None
+
 
 def parse_cmd(data):
     # data = str(data).encode()
     try:
-        cmd_list = data.split(':', 1)
+        cmd_list = data.split(':')
         cmd = cmd_list[0]
         if cmd == 'help':
             return help(cmd_list)
@@ -188,6 +223,9 @@ def parse_cmd(data):
             return parse_str(cmd_list, data)
         elif cmd in halo_cmd_bool:
             return parse_bool(cmd_list, data)
+        elif cmd in halo_cmd_tunnel:
+            print("parse tunnel!")
+            return parse_tunnel(cmd_list, data)
         else:
             raise Exception('cmd[%s] is not support' % data)
 

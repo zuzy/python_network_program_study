@@ -121,7 +121,7 @@ class Client_handle(Regist, hp_utils):
         for r in ret:
             chk ^= r
         ret += self.tobyte(chk)
-        ret = self.escape(ret)
+        ret = self.encode(ret)
         ret += b'\x7e'
         ret = b'\x7e' + ret
         return ret
