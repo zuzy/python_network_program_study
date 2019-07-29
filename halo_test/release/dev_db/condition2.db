@@ -1,0 +1,63 @@
+{
+    "cmd": "getconditions",
+    "params": {
+        "sce": {
+            "回家": {
+                "type": "RS485",
+                "payload": "1104ee"
+            },
+            "会议": {
+                "type": "RS485",
+                "payload": "4ee5i310"
+            }
+        },
+        "dev": {
+            "空调12": {
+                "ACTION_OPEN": {
+                    "type": "RS485",
+                    "payload": "123456"
+                },
+                "ACTION_CLOSE": {
+                    "type": "RS485",
+                    "payload": "12345667547564657"
+                },
+                "mode": {
+                    "value": {
+                        "MODE_COOL": 1,
+                        "MODE_WARM": 2
+                    },
+                    "type": "RS485",
+                    "payload": "1234[2]56, value"
+                },
+                "ACTION_TO": {
+                    "ATTRIBUTE_TEMPERATURE": {
+                        "type": "RS485",
+                        "payload": "123456[2], value"
+                    },
+                    "ATTRIBUTE_WIND_SPEED": {
+                        "value": {
+                            "VALUE_LOW": 0,
+                            "VALUE_MIDDLE": 1,
+                            "VALUE_HIGH": 2,
+                            "VALUE_AUTO": 3
+                        },
+                        "type": "RS485",
+                        "playload": "ffdd[2], value"
+                    }
+                },
+                "ACTION_ADD": {
+                    "ATTRIBUTE_TEMPERATURE": {
+                        "type": "RS485",
+                        "payload": "addd"
+                    }
+                },
+                "ACTION_REDUCE": {
+                    "ATTRIBUTE_TEMPERATURE": {
+                        "type": "RS485",
+                        "payload": "ddda"
+                    }
+                }
+            }
+        }
+    }
+}
