@@ -152,7 +152,7 @@ class Tcp_handle:
                     cmd = json.loads(x)
                     # print(cmd['cmd'])
                     db_str = d.dumps(cmd['cmd'])
-                    print('db_str', db_str)
+                    # print('db_str', db_str)
                     if db_str:
                         self.send(db_str + '\n')
         except Exception as e:

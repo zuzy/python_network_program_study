@@ -87,17 +87,22 @@ halo_cmd = {
     'play': {
         ARGNUM:1,
         CMD:json.dumps({CMD:'control',PARAMS:{'playstate':'play'}}),
-        COMMENT:'start\n\tstart the loacal music'
+        COMMENT:'play\n\tstart the loacal music'
     },
     'next': {
         ARGNUM:1,
         CMD:json.dumps({CMD:'control',PARAMS:{'playstate':'next'}}),
-        COMMENT:'start\n\tstart the loacal music'
+        COMMENT:'next\n\tthe next music'
     },
     'prev': {
         ARGNUM:1,
         CMD:json.dumps({CMD:'control',PARAMS:{'playstate':'prev'}}),
-        COMMENT:'start\n\tstart the loacal music'
+        COMMENT:'prev\n\tthe prev music'
+    },
+    'getclients': {
+        ARGNUM:1,
+        CMD:json.dumps({CMD:'getclients',PARAMS:{}}),
+        COMMENT:'getclients\n\tget the clients of connection'
     },
     'index': {
         ARGNUM:2,
