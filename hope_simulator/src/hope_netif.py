@@ -9,7 +9,7 @@ import psutil
 
 
 class Net_info():
-    def __init__(self, adapter='enp5s0'):
+    def __init__(self, adapter='eth0'):
         self.adapter = adapter
         info = psutil.net_if_addrs()
         net = info[self.adapter]

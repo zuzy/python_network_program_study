@@ -1,5 +1,4 @@
 {
     "python.linting.pylintEnabled": true,
-    "editor.fontFamily": "'Droid Sans Mono', 'monospace', monospace, 'Droid Sans Fallback', 'Firacode'",
     "editor.fontLigatures": true
 }
