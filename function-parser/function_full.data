@@ -1,0 +1,66 @@
+proto_library(
+    name = "topspti_proto",
+    srcs = glob(["proto/*.proto"])
+)
+
+cc_proto_library(
+  name = "topspti_cc_proto",
+  deps = [":topspti_proto"],
+)
+
+proto_library(
+    name = "database_proto",
+    srcs = glob(["proto/database/*.proto"])
+)
+
+cc_proto_library(
+    name = "database_cc_proto",
+    deps = [":database_proto"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "dpf_handler",
+    hdrs = [
+        "dpf_handler.h",
+    ],
+    deps = [
+        ":logging",
+        ":dpf_defs",
+        ":sip_dpf",
+        ":dma_dpf",
+        ":cqm_dpf",
+        ":ts_dpf",
+        ":vdec_dpf",
+        ":hcvg_dpf",
+        ":pcie_dpf",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "reader",
+    hdrs = glob([
+        "reader/*.h",
+    ]),
+    srcs = glob([
+        "reader/*.cc",
+    ]),
+    deps = [
+        ":database_cc_proto",
+        ":utils",
+        ":dpf_handler",
+        ":topspti_cc_proto",
+        ":api",
+        ":defs",
+        ":global",
+        ":logging",
+        ":meta",
+        ":obj",
+        ":section",
+        ":header",
+        "//lib:dtu_umd"
+    ],
+    linkopts = ["-lstdc++fs"],
+    includes = ["."],
+)

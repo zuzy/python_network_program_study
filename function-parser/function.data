@@ -1,0 +1,26 @@
+cc_library(
+    name = "reader",
+    hdrs = glob([
+        "reader/*.h",
+    ]),
+    srcs = glob([
+        "reader/*.cc",
+    ]),
+    deps = [
+        ":database_cc_proto",
+        ":utils",
+        ":dpf_handler",
+        ":topspti_cc_proto",
+        ":api",
+        ":defs",
+        ":global",
+        ":logging",
+        ":meta",
+        ":obj",
+        ":section",
+        ":header",
+        "//lib:dtu_umd"
+    ],
+    linkopts = ["-lstdc++fs"],
+    includes = ["."],
+)
