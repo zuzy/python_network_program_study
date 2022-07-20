@@ -1,0 +1,437 @@
+cmake_minimum_required(VERSION "3.14.2")
+#CAI_E4: Removed ENABLE_CMAKE_BUILD
+add_subdirectory(topspti) #CAI_E2:Added topspti api
+
+######################################
+############# SOURCES ################
+######################################
+set(DTU_CONF_PROTOC_EXECUTABLE "${CMAKE_BINARY_DIR}/bin/protoc")
+set(PROTOBUF_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/sdk/lib/profile/proto)
+list(APPEND config_parser_hdrs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/config_parser.h")
+list(APPEND config_parser_hdrs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/config_env_parser.h")
+list(APPEND config_parser_hdrs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/config_file_parser.h")
+list(APPEND config_parser_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/config_parser.cc")
+list(APPEND config_parser_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/config_env_parser.cc")
+list(APPEND config_parser_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/config_file_parser.cc")
+list(APPEND variant_headers "${CMAKE_SOURCE_DIR}/sdk/lib/profile/variant/include/mpark/config.h")
+list(APPEND variant_headers "${CMAKE_SOURCE_DIR}/sdk/lib/profile/variant/include/mpark/in_place.h")
+list(APPEND variant_headers "${CMAKE_SOURCE_DIR}/sdk/lib/profile/variant/include/mpark/lib.h")
+list(APPEND variant_headers "${CMAKE_SOURCE_DIR}/sdk/lib/profile/variant/include/mpark/variant.h")
+list(APPEND defs_hdrs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_defs.h")
+list(APPEND defs_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_defs.cc")
+list(APPEND section_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/section.cc")
+list(APPEND api_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_api.cc")
+list(APPEND api_hdrs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_api.h")
+list(APPEND trace_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_trace.cc")
+list(APPEND trace_hdrs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile.h")
+list(APPEND trace_hdrs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_trace.h")
+list(APPEND activity_info_hdrs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_activity_info.h")
+list(APPEND activity_info_hdrs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_thunk_info.h")
+list(APPEND mutex_hdrs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/mutex.h")
+list(APPEND mq_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_mq.cc")
+list(APPEND dpf_common_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/dpf_common.cc")
+list(APPEND sip_dpf_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/sip_dpf.cc")
+list(APPEND dma_dpf_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/dma_dpf.cc")
+list(APPEND cqm_dpf_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/cqm_dpf.cc")
+list(APPEND ts_dpf_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/ts_dpf.cc")
+list(APPEND vdec_dpf_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/vdec_dpf.cc")
+list(APPEND hcvg_dpf_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/hcvg_dpf.cc")
+list(APPEND pcie_dpf_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/pcie_dpf.cc")
+list(APPEND dpf_asm_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_dpf_asm.cc")
+list(APPEND cpu_timeline_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/cpu_timeline.cc")
+list(APPEND cpu_util_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/cpu_util.cc")
+list(APPEND host_util_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/host_util.cc")
+list(APPEND system_info_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/system_info.cc")
+list(APPEND dpf_handler_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/dpf_handler.cc")
+list(APPEND memory_tracer_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/memory/mem_tracer.cc")
+list(APPEND memory_data "${CMAKE_SOURCE_DIR}/sdk/lib/profile/memory/MemoryData.proto")
+list(APPEND trace_reg_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_trace_reg.cc")
+list(APPEND sw_ctrl_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/sw_ctrl.cc")
+list(APPEND pti_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/pti.cc")
+list(APPEND init_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/init.cc")
+list(APPEND profile_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile.cc")
+set(OUTPUT_PB_SRC_9 "${CMAKE_BINARY_DIR}/sdk/lib/profile/memory/MemoryData.pb.cc")
+set(OUTPUT_PB_HEADER_9 "${CMAKE_BINARY_DIR}/sdk/lib/profile/memory/MemoryData.pb.h")
+list(APPEND profile_include_dirs "${CMAKE_SOURCE_DIR}/sdk/lib/dbgAPI/src")
+list(APPEND profile_include_dirs "${CMAKE_SOURCE_DIR}/sdk/lib/dbgAPI/src/hwapi/mach")
+list(APPEND profile_include_dirs "${CMAKE_BINARY_DIR}/sdk/lib/dbgAPI/src")
+list(APPEND profile_include_dirs "${CMAKE_BINARY_DIR}/sdk/lib/profile/lib/profile")
+list(APPEND profile_include_dirs "${CMAKE_BINARY_DIR}/sdk/lib/profile")
+###############################################
+############### TARGET EXECUTABLE #############
+###############################################
+dtu_cc_library(
+NAME config_parser
+SRCS ${config_parser_srcs}
+LINK_DEPS logging
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME cereal 
+INCLUDES ${CMAKE_SOURCE_DIR}/sdk/include
+         ${profile_include_dirs})
+
+dtu_cc_library(
+NAME variant 
+INCLUDES "${CMAKE_SOURCE_DIR}/sdk/lib/profile/variant/include/mpark"
+)
+
+dtu_cc_library(
+NAME defs
+SRCS ${defs_srcs}
+LINK_DEPS mutex activity_info variant util cereal internal  
+UTIL_DEPS topspti_proto
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME section 
+SRCS ${section_srcs}
+LINK_DEPS cereal internal mutex umd_include
+UTIL_DEPS topspti_proto
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME api
+SRCS ${api_srcs}
+LINK_DEPS activity_info defs md5 mutex logging util internal topspti_api hwapi
+UTIL_DEPS topspti_proto
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME trace
+SRCS ${trace_srcs}
+LINK_DEPS defs activity_info internal logging variant util 
+UTIL_DEPS topspti_proto
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME internal 
+SRCS "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_internal.cc"
+LINK_DEPS activity_info comm config_parser logging 
+UTIL_DEPS topspti_proto 
+DEFINES -DNO_OPENMPI
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME activity_info
+LINK_DEPS cereal md5 header variant
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME mutex
+)
+dtu_cc_library(
+NAME md5
+SRCS "${CMAKE_SOURCE_DIR}/sdk/lib/profile/md5.cc"
+INCLUDES ${profile_include_dirs})
+
+dtu_cc_library(
+NAME logging
+LINK_DEPS util
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME header
+SRCS "${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_header.cc"
+LINK_DEPS md5
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME comm )
+
+dtu_cc_library(
+NAME  profile_for_umd
+LINK_DEPS defs section api trace
+INCLUDES ${profile_include_dirs}
+)
+dtu_cc_library(
+NAME mq 
+SRCS ${mq_srcs}
+LINK_DEPS logging  
+
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME hw_ctrl
+LINK_DEPS logging hwapi internal
+
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME cqm_ctrl
+LINK_DEPS hw_ctrl logging internal 
+)
+
+dtu_cc_library(
+NAME dpf_defs
+)
+dtu_cc_library(
+NAME dpf_common
+SRCS ${dpf_common_srcs}
+LINK_DEPS dpf_defs
+UTIL_DEPS  sdk_include2
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME sip_dpf
+SRCS ${sip_dpf_srcs}
+LINK_DEPS dpf_common logging
+
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME cqm_dpf
+SRCS ${cqm_dpf_srcs}
+LINK_DEPS  dpf_common logging
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME dma_dpf
+SRCS ${dma_dpf_srcs}
+LINK_DEPS dpf_common logging
+INCLUDES ${profile_include_dirs}
+)
+
+
+dtu_cc_library(
+NAME ts_dpf
+SRCS ${ts_dpf_srcs}
+LINK_DEPS dpf_common logging
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME vdec_dpf 
+SRCS ${vdec_dpf_srcs}
+LINK_DEPS dpf_common logging
+INCLUDES ${profile_include_dirs}
+)
+
+
+dtu_cc_library(
+NAME hcvg_dpf
+SRCS ${hcvg_dpf_srcs}
+LINK_DEPS dpf_common logging
+INCLUDES ${profile_include_dirs})
+
+dtu_cc_library(
+NAME pcie_dpf
+SRCS ${pcie_dpf_srcs}
+LINK_DEPS dpf_common logging
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME dpf_asm 
+SRCS ${dpf_asm_srcs}
+LINK_DEPS logging internal dpf_defs
+INCLUDES ${profile_include_dirs}
+)
+dtu_cc_library(
+NAME cpu_timeline
+SRCS ${cpu_timeline_srcs}
+LINK_DEPS logging activity_info topspti_proto internal
+
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME cpu_util
+SRCS ${cpu_util_srcs}
+LINK_DEPS logging internal
+
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME host_util 
+SRCS ${host_util_srcs}
+LINK_DEPS internal
+
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME system_info
+SRCS ${system_info_srcs}
+LINK_DEPS api internal
+
+INCLUDES ${profile_include_dirs}
+)
+dtu_cc_library(
+NAME const
+)
+dtu_cc_library(
+NAME dpf_handler
+SRCS ${dpf_handler_srcs}
+LINK_DEPS const logging dpf_defs sip_dpf dma_dpf cqm_dpf ts_dpf vdec_dpf hcvg_dpf pcie_dpf
+
+INCLUDES ${profile_include_dirs}
+)
+dtu_cc_library(
+NAME irq
+LINK_DEPS dpf_common internal logging umd_include
+)
+#CAI_E3:Function dtu_create_virtual_headers added instead of dtu_file_gen
+dtu_create_virtual_headers(
+NAME proto_profile
+SRCS_GLOB "${CMAKE_SOURCE_DIR}/sdk/lib/profile/proto/*"
+DEST ${CMAKE_BINARY_DIR}/sdk/lib/profile/proto
+)
+
+dtu_file_gen(
+NAME MemoryData_pb_files
+SRCS ${memory_data} #CAI_E3:Added Sources to SRCS
+OUTS "${OUTPUT_PB_SRC_9}" "${OUTPUT_PB_HEADER_9}"
+GEN_COMMANDS
+        COMMAND ${DTU_CONF_PROTOC_EXECUTABLE} --proto_path=${CMAKE_SOURCE_DIR}/sdk/lib/profile/memory --cpp_out=${CMAKE_BINARY_DIR}/sdk/lib/profile/memory ${memory_data} -I ${CMAKE_BINARY_DIR}/sdk
+WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/sdk/lib/profile
+DEPS proto_profile protoc libprotobuf protoc_bin
+        )
+
+
+dtu_cc_library( 
+NAME memory_tracer 
+SRCS ${memory_tracer_srcs} "${CMAKE_SOURCE_DIR}/sdk/lib/profile/memory/mem_tracer.h"
+LINK_DEPS api defs 
+UTIL_DEPS MemoryData_pb_files
+INCLUDES ${profile_include_dirs} 
+)
+
+dtu_cc_library(
+NAME MemoryData
+SRCS  "${OUTPUT_PB_SRC_9}" "${OUTPUT_PB_HEADER_9}")
+
+
+dtu_cc_library(
+NAME trace_reg
+SRCS ${trace_reg_srcs}
+LINK_DEPS cpu_func_mgr api activity_info trace logging
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME buf
+LINK_DEPS dpf_defs hw_ctrl irq driver include logging internal hwapi 
+)
+dtu_cc_library(
+NAME raw_data
+LINK_DEPS logging buf internal
+)
+dtu_cc_library(
+NAME dma_crc
+LINK_DEPS raw_data logging)
+
+dtu_cc_library(
+NAME ver
+UTIL_DEPS libprofile_version_header
+)
+dtu_cc_library(
+NAME sw_ctrl
+SRCS ${sw_ctrl_srcs}
+LINK_DEPS cpu_util activity_info comm config_parser cpu_timeline dma_crc header host_util logging memory_tracer mutex system_info ver internal
+COPTS -DNO_OPENMPI -Wno-error=narrowing -DAUTOLOAD_DYNAMIC_KERNELS  -D__DISABLE_LLVM_EXPORT__ -fPIC -D_GLIBCXX_USE_CXX11_ABI=0 -std=c++14 -fvisibility-inlines-hidden -DBOOST_MATH_DISABLE_FLOAT128 -Wno-builtin-macro-redefined "-D__DATE__='redacted'" "-D__TIMESTAMP__='redacted'" "-D__TIME__='redacted'"
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME dpf_ctrl
+LINK_DEPS buf const hw_ctrl hwapi logging mutex internal hw_access_api
+LINKOPTS -lm
+)
+dtu_cc_library(
+NAME ctrl  
+LINK_DEPS cqm_ctrl dpf_ctrl sw_ctrl internal
+)
+dtu_cc_library(
+NAME pti 
+SRCS ${pti_srcs}
+LINK_DEPS api ctrl defs mutex sw_ctrl internal
+
+INCLUDES ${profile_include_dirs}
+)
+
+dtu_cc_library(
+NAME timestamp
+LINK_DEPS raw_data)
+
+dtu_cc_library(
+NAME init 
+SRCS ${init_srcs}
+LINK_DEPS activity_info api comm ctrl logging memory_tracer mutex mq pti internal
+COPTS -DNO_OPENMPI
+
+INCLUDES ${profile_include_dirs}
+) 
+
+include(${CMAKE_SOURCE_DIR}/sdk/lib/profile/proto.cmake)
+
+define_proto(topspti_proto topspti lib/profile/proto)
+define_proto(topspti_common_data topspti_common_data lib/profile/proto)
+define_proto(topspti_info topspti_info lib/profile/proto)
+define_proto(topspti_kernel_meta topspti_kernel_meta lib/profile/proto)
+define_proto(topspti_memcpy_meta topspti_memcpy_meta lib/profile/proto)
+define_proto(topspti_op_meta topspti_op_meta lib/profile/proto)
+define_proto(topspti_packet_meta topspti_packet_meta lib/profile/proto)
+define_proto(topspti_trace_event topspti_trace_event lib/profile/proto)
+
+dtu_cc_library(
+NAME profile
+SRCS ${profile_srcs}
+LINK_DEPS mutex defs hwapi md5 ctrl sw_ctrl mq config_parser internal timestamp dpf_handler cereal logging section dpf_asm api trace_reg trace memory_tracer init comm pti topspti_proto topspti_init topspti_api
+LINKOPTS -pthread -lrt -DNO_OPENMPI
+)
+
+dtu_file_gen(
+NAME volatile_status_cmake
+SRCS ${CMAKE_SOURCE_DIR}/sdk/tools/get_workspace_status.sh#CAI_E3:Added Sources to SRCS
+OUTS "${CMAKE_BINARY_DIR}/sdk/lib/profile/volatile-status.txt"
+GEN_COMMANDS
+COMMAND ./get_workspace_status.sh > ${CMAKE_BINARY_DIR}/sdk/lib/profile/volatile-status.txt
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/sdk/tools)
+
+dtu_file_gen(
+NAME libprofile_version_header
+SRCS ${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_version_cmake.sh #CAI_E3:Added Sources to SRCS
+OUTS ${CMAKE_BINARY_DIR}/sdk/lib/profile/libprofile_version.h
+GEN_COMMANDS  
+COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/sdk/lib/profile/libprofile_version_cmake.sh ${CMAKE_BINARY_DIR}/sdk/lib/profile/libprofile_version_cmake.sh
+COMMAND ./libprofile_version_cmake.sh > ${CMAKE_BINARY_DIR}/sdk/lib/profile/libprofile_version.h
+DEPS "${CMAKE_BINARY_DIR}/sdk/lib/profile/volatile-status.txt"
+WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/sdk/lib/profile")
+
+
+
+#############################################
+########## INCLUDE DIRECTORIES ##############
+#############################################
+##################################
+####### DEPENDENCIES #############
+##################################
+add_dependencies(topspti_proto topspti_common_data)
+add_dependencies(topspti_proto topspti_info)
+add_dependencies(topspti_proto topspti_op_meta)
+add_dependencies(topspti_proto topspti_kernel_meta)
+add_dependencies(topspti_proto topspti_memcpy_meta)
+add_dependencies(topspti_proto topspti_packet_meta)
+add_dependencies(topspti_proto topspti_trace_event)
+add_dependencies(topspti_kernel_meta topspti_common_data)
+add_dependencies(topspti_kernel_meta topspti_packet_meta)
+add_dependencies(topspti_memcpy_meta topspti_common_data)
+add_dependencies(topspti_memcpy_meta topspti_packet_meta)
+add_dependencies(topspti_op_meta topspti_common_data)
+add_dependencies(topspti_trace_event topspti_common_data)

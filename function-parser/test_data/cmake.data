@@ -1,0 +1,92 @@
+cmake_minimum_required(VERSION "3.14.4")
+
+#############################
+######### SOURCES ###########
+#############################
+
+/reader/profile_reader.cc")
+#list(APPEND topspti_reader_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/topspti/reader/profile_adjuster.cc")
+list(APPEND topspti_pavo_topspti_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/topspti/pavo/pavo_topspti.cc")
+list(APPEND topspti_dorado_topspti_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/topspti/dorado/dorado_topspti.cc")
+list(APPEND topspti_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/profile/topspti/topspti.cc")
+
+###########################
+######## TARGETS ##########
+###########################
+
+dtu_cc_library(
+    NAME topspti_device
+    LINK_DEPS topspti_global topspti_logging
+    INCLUDES ${topspti_common_dir}
+)
+dtu_cc_library(
+    NAME topspti_dtu20_sip_pmc
+    SRCS ${topspti_dtu20_sip_pmc_srcs}
+    LINK_DEPS topspti_dtu20_pmc
+    COPTS -D__PAVO__ -U__LEO__ -D__DORADO__
+    INCLUDES ${topspti_common_dir}
+)
+dtu_cc_library( 
+    NAME topspti_dtu20_pmc 
+    SRCS ${topspti_dtu20_pmc_srcs}
+    LINK_DEPS  topspti_defs topspti_logging hwapi
+    INCLUDES ${topspti_common_dir}
+)
+#CAI_E3:Function dtu_create_virtual_headers instead of dtu_file_gen
+dtu_create_virtual_headers(
+NAME proto_database_topspti
+SRCS_GLOB "${CMAKE_SOURCE_DIR}/sdk/lib/profile/topspti/proto/database/*"
+DEST ${CMAKE_BINARY_DIR}/sdk/lib/profile/topspti/proto/database
+) 
+
+
+include(${CMAKE_SOURCE_DIR}/sdk/lib/profile/topspti/../proto.cmake)
+define_proto(topspti2_proto_cc topspti2 lib/profile/topspti/proto)
+define_proto(topspti_common_data_proto_cc topspti_common_data lib/profile/topspti/proto)
+add_library(topspti STATIC
+            $<TARGET_OBJECTS:topspti_config_parser>
+            $<TARGET_OBJECTS:topspti_md5>
+            $<TARGET_OBJECTS:topspti_dtu20_sip_pmc>
+            $<TARGET_OBJECTS:topspti_dtu20_pmc>
+            $<TARGET_OBJECTS:topspti_dpf_common>
+            $<TARGET_OBJECTS:topspti_dpf_utils>
+            $<TARGET_OBJECTS:topspti_sip_dpf>
+            $<TARGET_OBJECTS:topspti_dma_dpf>
+            $<TARGET_OBJECTS:topspti_cqm_dpf>
+            $<TARGET_OBJECTS:topspti_ts_dpf>
+            $<TARGET_OBJECTS:topspti_vdec_dpf>
+            $<TARGET_OBJECTS:topspti_hcvg_dpf>
+            $<TARGET_OBJECTS:topspti_pcie_dpf>
+            $<TARGET_OBJECTS:topspti_reader>
+            $<TARGET_OBJECTS:topspti_utils>
+            $<TARGET_OBJECTS:topspti_mq>
+            $<TARGET_OBJECTS:topspti_sw_ctrl>
+            $<TARGET_OBJECTS:topspti_system_info>
+            $<TARGET_OBJECTS:topspti_cpu_util>
+            $<TARGET_OBJECTS:topspti_cpu_callstack>
+            $<TARGET_OBJECTS:topspti_host_util>
+            $<TARGET_OBJECTS:topspti_api>
+            $<TARGET_OBJECTS:topspti_section>
+            $<TARGET_OBJECTS:topspti_meta>
+            $<TARGET_OBJECTS:topspti_pavo_topspti>
+            $<TARGET_OBJECTS:topspti_dorado_topspti>
+            $<TARGET_OBJECTS:topspti_trace>
+            $<TARGET_OBJECTS:topspti_>
+            $<TARGET_OBJECTS:topspti_sip_pmc>
+)
+
+add_library(topspti_topspti_proto STATIC
+            $<TARGET_OBJECTS:topspti2_proto_cc>
+            $<TARGET_OBJECTS:topspti_common_data_proto_cc>
+            $<TARGET_OBJECTS:topspti_info_proto_cc>
+            $<TARGET_OBJECTS:topspti_kernel_meta_proto_cc>
+            $<TARGET_OBJECTS:topspti_memcpy_meta_proto_cc>
+            $<TARGET_OBJECTS:topspti_packet_meta_proto_cc>
+            $<TARGET_OBJECTS:topspti_op_meta_proto_cc>
+            $<TARGET_OBJECTS:topspti_trace_event_proto_cc>
+)
+add_dependencies(topspti2_proto_cc topspti_common_data_proto_cc)
+add_dependencies(topspti2_proto_cc topspti_info_proto_cc)
+add_dependencies(topspti2_proto_cc topspti_op_meta_proto_cc)
+
+

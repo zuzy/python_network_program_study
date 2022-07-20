@@ -1,0 +1,86 @@
+cmake_minimum_required(VERSION "3.14.4")
+
+set(DTU_CONF_PROTOC_EXECUTABLE "${CMAKE_BINARY_DIR}/bin/protoc")
+set(DTU_CXX_STANDARD 14)
+
+#############################################
+################  SOURCE  ###################
+#############################################
+
+#list(APPEND op_define_srcs "${CMAKE_CURRENT_SOURCE_DIR}/op.cc")
+#list(APPEND op_define_srcs "${CMAKE_CURRENT_SOURCE_DIR}/op_kernel_def.cc")
+#list(APPEND op_define_srcs "${CMAKE_CURRENT_SOURCE_DIR}/op_registry.cc")
+#list(APPEND op_define_srcs "${CMAKE_CURRENT_SOURCE_DIR}/utils.cc")
+list(APPEND op_kernel_def_proto "${CMAKE_SOURCE_DIR}/sdk/lib/op_define/op_def.proto")
+
+set(OUTPUT_PB_SRC_OP_KERNEL "${CMAKE_BINARY_DIR}/sdk/lib/op_define/lib/op_define/op_def.pb.cc")
+set(OUTPUT_PB_HEADER_OP_KERNEL "${CMAKE_BINARY_DIR}/sdk/lib/op_define/lib/op_define/op_def.pb.h")
+set(PROTOBUF_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/sdk/lib/op_define")#check
+
+list(APPEND dtu_op_cfg_proto "${CMAKE_SOURCE_DIR}/sdk/lib/op_define/dtu_op_cfg.proto")
+set(OUTPUT_PB_SRC_OP_DEFINE "${CMAKE_BINARY_DIR}/sdk/lib/op_define/lib/op_define/dtu_op_cfg.pb.cc")
+#CAI_E4: Corrected the name from op_deine to op_define as it was causing re-trigger
+set(OUTPUT_PB_HEADER_OP_DEFINE "${CMAKE_BINARY_DIR}/sdk/lib/op_define/lib/op_define/dtu_op_cfg.pb.h")
+list(APPEND op_kernel_def_2_proto "${CMAKE_SOURCE_DIR}/sdk/lib/op_define/types.proto")
+set(OUTPUT_PB_SRC_OP_KERNEL_2 "${CMAKE_BINARY_DIR}/sdk/lib/op_define/lib/op_define/types.pb.cc")
+set(OUTPUT_PB_HEADER_OP_KERNEL_2 "${CMAKE_BINARY_DIR}/sdk/lib/op_define/lib/op_define/types.pb.h")
+
+#############################################
+################  TARGET  ###################
+#############################################
+dtu_file_gen(
+NAME dtu_op_cfg_files
+SRCS ${dtu_op_cfg_proto}
+OUTS "${OUTPUT_PB_SRC_OP_DEFINE}" "${OUTPUT_PB_HEADER_OP_DEFINE}"
+GEN_COMMANDS
+        COMMAND ${DTU_CONF_PROTOC_EXECUTABLE}  --cpp_out=${CMAKE_BINARY_DIR}/sdk/lib/op_define lib/op_define/dtu_op_cfg.proto -I ${CMAKE_SOURCE_DIR}/sdk 
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/sdk
+        DEPS protoc libprotobuf protoc_bin
+)
+
+dtu_file_gen(
+NAME op_kernel_def_files
+SRCS ${op_kernel_def_proto} 
+OUTS "${OUTPUT_PB_SRC_OP_KERNEL}" "${OUTPUT_PB_HEADER_OP_KERNEL}"
+GEN_COMMANDS 
+        COMMAND ${CMAKE_COMMAND} -E env cc_api_version=2 ${DTU_CONF_PROTOC_EXECUTABLE}  --cpp_out=${CMAKE_CURRENT_BINARY_DIR} ${op_kernel_def_proto} -I ${CMAKE_SOURCE_DIR}/sdk -I ${CMAKE_SOURCE_DIR}/3rdparty/protobuf-3.8.0/src -I ${CMAKE_SOURCE_DIR}/sdk/lib/op_define
+WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/sdk/lib/op_define
+DEPS protoc libprotobuf protoc_bin
+)
+
+dtu_file_gen(
+NAME op_kernel_def_2_files
+OUTS "${OUTPUT_PB_SRC_OP_KERNEL_2}" "${OUTPUT_PB_HEADER_OP_KERNEL_2}" 
+GEN_COMMANDS  
+        COMMAND ${CMAKE_BINARY_DIR}/bin/protoc --cpp_out=${CMAKE_BINARY_DIR}/sdk/lib/op_define -I ${CMAKE_SOURCE_DIR}/sdk lib/op_define/types.proto
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/sdk
+DEPS protoc libprotobuf protoc_bin
+)
+
+dtu_cc_library(
+NAME dtu_op_cfg_proto_cc_impl
+SRCS "${OUTPUT_PB_SRC_OP_DEFINE}" "${OUTPUT_PB_HEADER_OP_DEFINE}"
+DEPS dtu_op_cfg_files
+INCLUDES ${CMAKE_BINARY_DIR}/sdk/lib/op_define
+)
+
+dtu_cc_library(
+NAME op_kernel_def_cc_impl
+SRCS "${OUTPUT_PB_SRC_OP_KERNEL}" "${OUTPUT_PB_HEADER_OP_KERNEL}" "${OUTPUT_PB_SRC_OP_KERNEL_2}" "${OUTPUT_PB_HEADER_OP_KERNEL_2}"
+INCLUDES ${CMAKE_BINARY_DIR}/sdk/lib/op_define
+)
+
+dtu_cc_library(
+NAME op_define 
+SRCS_GLOB "*.cc"
+HDRS_GLOB "*.h"
+LINK_DEPS op_kernel_def_cc_impl dtu_op_cfg_proto_cc_impl  factor_libs util 
+UTIL_DEPS sdk_include2 
+COPTS -std=c++14 -Wl,--allow-multiple-definition
+INCLUDES "${CMAKE_SOURCE_DIR}/sdk/include"
+         "${CMAKE_BINARY_DIR}/sdk/lib/op_define"
+         "${CMAKE_SOURCE_DIR}/3rdparty/absl"
+         "${CMAKE_SOURCE_DIR}/sdk/lib/dbgAPI/src"
+         "${CMAKE_SOURCE_DIR}/3rdparty/inja/third_party/include"
+)
+

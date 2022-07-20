@@ -1,0 +1,89 @@
+cmake_minimum_required(VERSION "3.14.4")
+add_subdirectory (codegen)
+set(DTU_CXX_STANDARD 14)
+add_subdirectory(register)# CAI_E2:kernel_register dependency added
+add_subdirectory (engine) #CAI_E2:Added factor_engine
+#CAI_E4: Removed ENABLE_CMAKE_BUILD
+#############################################
+################  SOURCE  ###################
+#############################################
+
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/print.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/program.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/program_experimental.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/program_impl.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/func.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/schedule.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/op_traits_impl.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/target.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/ops.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/types.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/utils.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/primo.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/func_experimental.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/dialect_registration.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/codegen/macro_instruction/element_wise/minst_elem_interface.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/codegen/macro_instruction/element_wise/minst_elem_reluquant_int8.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/codegen/macro_instruction/element_wise/minst_elem_implemenation.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/codegen/macro_instruction/element_wise/minst_elem_addquant_int8.cc")
+#list(APPEND factor_lib_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/kernel_assert/assert_info.cc")
+
+list(APPEND factor_lib_common_dirs "${CMAKE_SOURCE_DIR}/sdk/lib/llir")
+list(APPEND factor_lib_common_dirs "${CMAKE_SOURCE_DIR}/sdk/lib/dbgAPI/src")
+list(APPEND factor_lib_common_dirs "${CMAKE_SOURCE_DIR}/3rdparty/inja/third_party/include")
+list(APPEND factor_lib_common_dirs "${CMAKE_SOURCE_DIR}/sdk/lib/dbgAPI/src/hwapi/mach")
+list(APPEND factor_lib_common_dirs "${CMAKE_BINARY_DIR}/sdk/lib/dbgAPI/src")
+list(APPEND factor_lib_common_dirs "${CMAKE_SOURCE_DIR}/3rdparty/inja/include")
+list(APPEND factor_lib_common_dirs "${CMAKE_BINARY_DIR}/sdk/lib/factor") #CAI_AG:Added include directory
+list(APPEND factor_lib_common_dirs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/codegen")
+
+list(APPEND kernel_assert_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/factor/kernel_assert/assert_info.cc")
+
+list(APPEND factor_ops_gen1_outs "${CMAKE_BINARY_DIR}/sdk/lib/factor/ops.h.inc")
+list(APPEND factor_ops_gen1_outs "${CMAKE_BINARY_DIR}/sdk/lib/factor/ops.cpp.inc")
+list(APPEND factor_ops_gen1_outs "${CMAKE_BINARY_DIR}/sdk/lib/factor/op_enums.h.inc")
+list(APPEND factor_ops_gen1_outs "${CMAKE_BINARY_DIR}/sdk/lib/factor/op_enums.cpp.inc")
+list(APPEND factor_ops_gen1_outs "${CMAKE_BINARY_DIR}/sdk/lib/factor/ops.md")
+#############################################
+################  TARGET  ###################
+#############################################
+file(GLOB_RECURSE mlir_td_files CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/*.td)
+
+dtu_file_gen(
+    NAME factor_ops_gen
+    OUTS ${factor_ops_gen1_outs}
+    GEN_COMMANDS
+        COMMAND ./mlir-tblgen -gen-op-decls  -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include -I ${CMAKE_SOURCE_DIR}/sdk ${CMAKE_SOURCE_DIR}/sdk/lib/factor/ops.td -o ${CMAKE_BINARY_DIR}/sdk/lib/factor/ops.h.inc > /dev/null 2>&1
+        COMMAND ./mlir-tblgen -gen-op-defs  -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include -I ${CMAKE_SOURCE_DIR}/sdk ${CMAKE_SOURCE_DIR}/sdk/lib/factor/ops.td -o ${CMAKE_BINARY_DIR}/sdk/lib/factor/ops.cpp.inc > /dev/null 2>&1
+        COMMAND ./mlir-tblgen -gen-enum-decls  -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include -I ${CMAKE_SOURCE_DIR}/sdk ${CMAKE_SOURCE_DIR}/sdk/lib/factor/ops.td -o ${CMAKE_BINARY_DIR}/sdk/lib/factor/op_enums.h.inc > /dev/null 2>&1
+        COMMAND ./mlir-tblgen -gen-enum-defs  -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include -I ${CMAKE_SOURCE_DIR}/sdk ${CMAKE_SOURCE_DIR}/sdk/lib/factor/ops.td  -o ${CMAKE_BINARY_DIR}/sdk/lib/factor/op_enums.cpp.inc > /dev/null 2>&1
+        COMMAND ./mlir-tblgen -gen-op-doc  -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include -I ${CMAKE_SOURCE_DIR}/sdk ${CMAKE_SOURCE_DIR}/sdk/lib/factor/ops.td -o ${CMAKE_BINARY_DIR}/sdk/lib/factor/ops.md > /dev/null 2>&1
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/3rdparty/llvm-project/bin
+    DEPS 3rdparty_llvm
+    SRCS ${CMAKE_SOURCE_DIR}/sdk/lib/factor/ops.td ${CMAKE_SOURCE_DIR}/sdk/lib/factor/arithmetic_ops.td ${mlir_td_files}
+)
+
+#CAIE4: Added the individual dependency of factor_intenal_header_inc_files2 factor_intenal_header_inc_files3 instead of the dummy target factor_intenal_header_inc_files which was earlier dependent on these three
+dtu_cc_library(
+    NAME internal_headers
+    UTIL_DEPS factor_ops_gen factor_intenal_header_inc_files2 factor_intenal_header_inc_files3
+    INCLUDES ${factor_lib_common_dirs}
+)
+
+dtu_cc_library(
+    NAME factor_libs
+    SRCS_GLOB "*.cc"
+    LINK_DEPS driver vdk_lib lib_runtime util hwapi internal_headers 3rdparty_llvm llir_util convert factor_engine sdk_clibs codegen
+    COPTS -std=c++14
+    INCLUDES "${CMAKE_SOURCE_DIR}/sdk/lib/llir/utils"
+             "${CMAKE_BINARY_DIR}/sdk/runtime/include"
+             ${factor_lib_common_dirs}
+)
+
+dtu_cc_library(
+    NAME factor_kernel_assert_lib
+    SRCS ${kernel_assert_srcs}
+    DEPS umd_headers_bin_folder
+    INCLUDES "${CMAKE_SOURCE_DIR}/sdk/lib/factor/kernel_assert"
+)
+

@@ -1,0 +1,54 @@
+#######################################################
+##############   SOURCE SOURCE SOURCE    ##############
+#######################################################
+add_subdirectory (executor)
+
+
+
+list(APPEND converter_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/hlir/hlir_to_factor.cc")
+list(APPEND converter_srcs "${CMAKE_SOURCE_DIR}/sdk/lib/hlir/dynamic_shape.cc")
+list(APPEND converter_hdrs "${CMAKE_SOURCE_DIR}/sdk/lib/hlir/hlir_to_factor.h")
+
+#CAI_E4: Removed ENABLE_CMAKE_BUILD
+add_compile_options(-std=c++14)
+include_directories("${CMAKE_BINARY_DIR}/sdk/lib/op_define")
+add_subdirectory(hlo2hlir)
+add_subdirectory(runtime)
+add_subdirectory(utils)
+add_subdirectory(ir)
+add_subdirectory(pass)
+add_subdirectory(transforms)
+add_subdirectory(tools)
+add_subdirectory(analysis)
+add_subdirectory(builder)
+add_subdirectory(cost_model)
+
+
+#######################################################
+##############     TARGET EXECUTABLE     ##############
+#######################################################
+set(DTU_CXX_STANDARD 14)
+dtu_cc_library(
+NAME converter
+SRCS ${converter_srcs}
+HDRS ${converter_hdrs}
+LINK_DEPS hlo_to_hlir hlir_passes kernel_register backends 3rdparty_llvm
+COPTS -std=c++14
+INCLUDES  "${CMAKE_SOURCE_DIR}/sdk/lib/hlir/hlir2factor"
+          "${CMAKE_SOURCE_DIR}/sdk/include"
+          "${CMAKE_SOURCE_DIR}/sdk/lib/hlir"
+          "${CMAKE_CURRENT_BINARY_DIR}"
+          "${CMAKE_SOURCE_DIR}/sdk/lib/hlir/hlo2hlir"
+          "${CMAKE_SOURCE_DIR}/sdk/lib/hlir/hlir2factor"
+          "${CMAKE_SOURCE_DIR}/sdk/lib/hlir/pass"
+          "${CMAKE_SOURCE_DIR}/sdk/lib/factor/register"
+          "${CMAKE_SOURCE_DIR}/sdk/lib/hlir/runtime"
+          "${CMAKE_SOURCE_DIR}/sdk/lib/util"
+          "${CMAKE_SOURCE_DIR}/sdk/lib/utils"
+          "${CMAKE_SOURCE_DIR}/sdk/lib/factor"
+          "${CMAKE_SOURCE_DIR}/3rdparty/absl"
+)
+
+add_library(hlir STATIC
+            $<TARGET_OBJECTS:converter>
+)

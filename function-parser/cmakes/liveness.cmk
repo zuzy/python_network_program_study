@@ -1,0 +1,70 @@
+cmake_minimum_required(VERSION "3.14.2")
+set(CMAKE_CXX_STANDARD 14) #Added
+add_compile_options(-std=c++14) #Added
+
+#############################################
+#################  SOURCE  ##################
+#############################################
+
+list(APPEND ir_srcs "${CMAKE_CURRENT_SOURCE_DIR}/ir/liveness_dialect.cc")
+list(APPEND ir_srcs "${CMAKE_CURRENT_SOURCE_DIR}/ir/dialect_registration.cc")
+list(APPEND ir_srcs "${CMAKE_CURRENT_SOURCE_DIR}/ir/liveness_ops.cc")
+
+list(APPEND builder_srcs "${CMAKE_CURRENT_SOURCE_DIR}/builder/liveness_builder.cc")
+
+set(liveness_ops_inc_gen_outputs "${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_ops.h.inc"
+                                 "${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_ops.cpp.inc"
+                                 "${CMAKE_CURRENT_BINARY_DIR}/ir/liveness.md"
+                                 "${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_op_interface.h.inc"
+                                 "${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_op_interface.cpp.inc"
+                                 "${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_enums.h.inc"
+                                 "${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_enums.cpp.inc"
+                                 "${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_struct_attr.h.inc"
+                                 "${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_struct_attr.cpp.inc"
+)
+
+
+##########################################
+#############  TARGET  ###################
+##########################################
+dtu_file_gen(
+    NAME liveness_ops_inc_gen
+    SRCS ${CMAKE_CURRENT_SOURCE_DIR}/ir/liveness.td
+    OUTS ${liveness_ops_inc_gen_outputs}
+    GEN_COMMANDS
+        COMMAND ${CMAKE_COMMAND} -E make_directory ir
+        COMMAND ./mlir-tblgen -gen-op-decls  -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/liveness.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_ops.h.inc
+        COMMAND ./mlir-tblgen -gen-op-defs  -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/liveness.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_ops.cpp.inc
+        COMMAND ./mlir-tblgen -gen-op-doc -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/liveness.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/liveness.md
+        COMMAND ./mlir-tblgen -gen-op-interface-decls -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include  ${CMAKE_CURRENT_SOURCE_DIR}/ir/liveness.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_op_interface.h.inc
+        COMMAND ./mlir-tblgen -gen-op-interface-defs -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include  ${CMAKE_CURRENT_SOURCE_DIR}/ir/liveness.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_op_interface.cpp.inc
+        COMMAND ./mlir-tblgen -gen-enum-decls -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/liveness.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_enums.h.inc
+        COMMAND ./mlir-tblgen -gen-enum-defs -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/liveness.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_enums.cpp.inc
+        COMMAND ./mlir-tblgen -gen-struct-attr-decls -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/liveness.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_struct_attr.h.inc
+        COMMAND ./mlir-tblgen -gen-struct-attr-defs -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/liveness.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/liveness_struct_attr.cpp.inc
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/3rdparty/llvm-project/bin
+    DEPS 3rdparty_llvm
+)
+
+dtu_cc_library(
+    NAME liveness_ir
+    SRCS ${ir_srcs}
+    DEPS liveness_ops_inc_gen 3rdparty_llvm logging_lib_logging sdk_include2
+    INCLUDES ${CMAKE_CURRENT_BINARY_DIR}/..
+)
+
+dtu_cc_library(
+    NAME builder_liveness
+    SRCS ${builder_srcs}
+    DEPS liveness_ir
+)
+
+#############################################
+###########  INCLUDE DIRECTORIES  ###########
+#############################################
+
+
+
+##########################################
+##########  ADD DEPENDENCIES  ############
+##########################################

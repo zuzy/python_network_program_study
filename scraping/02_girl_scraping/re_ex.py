@@ -12,3 +12,11 @@ if matchObj:
    print ("matchObj.group(2) : ", matchObj.group(2))
 else:
    print ("No match!!")
+
+
+line = "No module named 'aaa'"
+matchObj = re.match( r'No module named \'(.*)\'', line)
+if matchObj:
+   print ("matchObj.group(1) : ", matchObj.group(1))
+else:
+   print ("No match!!")

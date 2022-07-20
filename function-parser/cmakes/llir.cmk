@@ -1,0 +1,154 @@
+cmake_minimum_required(VERSION "3.14.2")
+set(CMAKE_CXX_STANDARD 14) #Added
+add_compile_options(-std=c++14) #Added
+
+#############################################
+#################  SOURCE  ##################
+#############################################
+
+list(APPEND ir_srcs "${CMAKE_CURRENT_SOURCE_DIR}/ir/affine_expr_expander.cc")
+list(APPEND ir_srcs "${CMAKE_CURRENT_SOURCE_DIR}/ir/llir_dialect.cc")
+list(APPEND ir_srcs "${CMAKE_CURRENT_SOURCE_DIR}/ir/llir_types.cc")
+list(APPEND ir_srcs "${CMAKE_CURRENT_SOURCE_DIR}/ir/apply_op_expander.cc")
+list(APPEND ir_srcs "${CMAKE_CURRENT_SOURCE_DIR}/ir/llir_op_traits_impl.cc")
+list(APPEND ir_srcs "${CMAKE_CURRENT_SOURCE_DIR}/ir/dialect_registration.cc")
+list(APPEND ir_srcs "${CMAKE_CURRENT_SOURCE_DIR}/ir/llir_ops.cc")
+
+list(APPEND builder_srcs "${CMAKE_CURRENT_SOURCE_DIR}/builder/llir_builder_dma.cc")
+list(APPEND builder_srcs "${CMAKE_CURRENT_SOURCE_DIR}/builder/llir_builder.cc")
+
+list(APPEND llir_util_srcs "${CMAKE_CURRENT_SOURCE_DIR}/utils/llir_utils.cc")
+
+list(APPEND tensor_handle_srcs "${CMAKE_CURRENT_SOURCE_DIR}/utils/tensor_handle.cc")
+
+list(APPEND analysis_srcs "${CMAKE_CURRENT_SOURCE_DIR}/analysis/live_tensors.cc")
+list(APPEND analysis_srcs "${CMAKE_CURRENT_SOURCE_DIR}/analysis/dma_flow.cc")
+list(APPEND analysis_srcs "${CMAKE_CURRENT_SOURCE_DIR}/analysis/interference_graph.cc")
+
+list(APPEND convert_util_srcs "${CMAKE_CURRENT_SOURCE_DIR}/convert/llir_convert_util.cc")
+
+list(APPEND convert_srcs "${CMAKE_CURRENT_SOURCE_DIR}/convert/convert_llir_2_binary.cc")
+list(APPEND convert_srcs "${CMAKE_CURRENT_SOURCE_DIR}/convert/check_assembler_binary_pass.cc")
+
+list(APPEND util_src "${CMAKE_CURRENT_SOURCE_DIR}/utils/utils.cc")
+list(APPEND util_src "${CMAKE_CURRENT_SOURCE_DIR}/utils/mem_balance_pools.cc")
+list(APPEND util_src "${CMAKE_CURRENT_SOURCE_DIR}/utils/mem_bank_allocator.cc")
+list(APPEND util_src "${CMAKE_CURRENT_SOURCE_DIR}/utils/mem_pool.cc")
+
+set(llir_ops_inc_gen_outputs "${CMAKE_CURRENT_BINARY_DIR}/ir/llir_ops.h.inc"
+                              "${CMAKE_CURRENT_BINARY_DIR}/ir/llir_ops.cpp.inc"
+                              "${CMAKE_CURRENT_BINARY_DIR}/ir/llir.md"
+                              "${CMAKE_CURRENT_BINARY_DIR}/ir/llir_op_interface.h.inc"
+                              "${CMAKE_CURRENT_BINARY_DIR}/ir/llir_op_interface.cpp.inc"
+                              "${CMAKE_CURRENT_BINARY_DIR}/ir/llir_enums.h.inc"
+                              "${CMAKE_CURRENT_BINARY_DIR}/ir/llir_enums.cpp.inc"
+                              "${CMAKE_CURRENT_BINARY_DIR}/ir/llir_struct_attr.h.inc"
+                              "${CMAKE_CURRENT_BINARY_DIR}/ir/llir_struct_attr.cpp.inc"
+)
+
+
+
+##########################################
+#############  TARGET  ###################
+##########################################
+
+dtu_file_gen(
+    NAME llir_ops_inc_gen
+    SRCS ${CMAKE_CURRENT_SOURCE_DIR}/ir/llir.td
+    OUTS ${llir_ops_inc_gen_outputs}
+    GEN_COMMANDS
+        COMMAND ${CMAKE_COMMAND} -E make_directory ir 
+        COMMAND ./mlir-tblgen -gen-op-decls  -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/llir.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/llir_ops.h.inc
+        COMMAND ./mlir-tblgen -gen-op-defs  -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/llir.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/llir_ops.cpp.inc
+        COMMAND ./mlir-tblgen -gen-op-doc -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/llir.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/llir.md
+        COMMAND ./mlir-tblgen -gen-op-interface-decls -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include  ${CMAKE_CURRENT_SOURCE_DIR}/ir/llir.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/llir_op_interface.h.inc      
+        COMMAND ./mlir-tblgen -gen-op-interface-defs -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include  ${CMAKE_CURRENT_SOURCE_DIR}/ir/llir.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/llir_op_interface.cpp.inc        
+        COMMAND ./mlir-tblgen -gen-enum-decls -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/llir.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/llir_enums.h.inc        
+        COMMAND ./mlir-tblgen -gen-enum-defs -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/llir.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/llir_enums.cpp.inc        
+        COMMAND ./mlir-tblgen -gen-struct-attr-decls -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/llir.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/llir_struct_attr.h.inc
+        COMMAND ./mlir-tblgen -gen-struct-attr-defs -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include ${CMAKE_CURRENT_SOURCE_DIR}/ir/llir.td   > ${CMAKE_CURRENT_BINARY_DIR}/ir/llir_struct_attr.cpp.inc
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/3rdparty/llvm-project/bin
+    DEPS 3rdparty_llvm
+)
+
+dtu_cc_library(
+    NAME utils_llir
+    SRCS ${util_src}
+    DEPS util profile 3rdparty_llvm
+)
+
+dtu_cc_library(
+    NAME ir
+    SRCS ${ir_srcs}
+    DEPS util utils_llir llir_ops_inc_gen
+    INCLUDES ${CMAKE_CURRENT_BINARY_DIR}/..
+)
+
+dtu_cc_library(
+    NAME builder
+    SRCS ${builder_srcs}
+    DEPS ir
+)
+
+dtu_cc_library(
+    NAME llir_util
+    SRCS ${llir_util_srcs}
+    DEPS builder
+)
+
+dtu_cc_library(
+    NAME tensor_handle
+    SRCS ${tensor_handle_srcs}
+    DEPS llir_util
+)
+
+dtu_cc_library(
+    NAME analysis
+    SRCS ${analysis_srcs}
+    DEPS llir_util tensor_handle 3rdparty_llvm
+)
+
+#CAI_E4: Removed dtu_umd from dependency as it was only a dummy target dependent on vdk_lib. And vdk_lib is already a dependency of convert_util target
+dtu_cc_library(
+    NAME convert_util
+    SRCS ${convert_util_srcs}
+    DEPS llir_util vdk_lib
+)
+
+dtu_file_gen(
+    NAME llir_dma_optimization_inc_gen
+    SRCS ${CMAKE_CURRENT_SOURCE_DIR}/transform/dma_optimization.td
+    OUTS ${CMAKE_CURRENT_BINARY_DIR}/transform/dma_optimization.inc
+    GEN_COMMANDS
+        COMMAND ${CMAKE_COMMAND} -E make_directory transform
+        COMMAND ./mlir-tblgen -gen-rewriters  -I ${CMAKE_SOURCE_DIR}/3rdparty/llvm-project/mlir/include -I ${CMAKE_SOURCE_DIR}/sdk ${CMAKE_CURRENT_SOURCE_DIR}/transform/dma_optimization.td   > ${CMAKE_CURRENT_BINARY_DIR}/transform/dma_optimization.inc
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/3rdparty/llvm-project/bin
+    DEPS 3rdparty_llvm
+)
+
+dtu_cc_library(
+    NAME transform
+    SRCS_GLOB "transform/*.cc"
+    HDRS_GLOB "transform/*.h" "ir/const_def.h"
+    DEPS builder analysis quarter llir_util llir_dma_optimization_inc_gen 3rdparty_llvm liveness_ir builder_liveness
+)
+target_compile_options(transform PRIVATE -std=c++14 -fstack-protector -Wall -Wunused-but-set-parameter -Wno-free-nonheap-object -fno-omit-frame-pointer -D_FORTIFY_SOURCE=1 -DNDEBUG -ffunction-sections -fdata-sections -fPIC -DLLVM_ENABLE_STATS -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -DLLVM_BUILD_GLOBAL_ISEL -D__CLANG_SUPPORT_DYN_ANNOTATION__ -DEIGEN_MPL2_ONLY -DEIGEN_MAX_ALIGN_BYTES=64 -DEIGEN_HAS_TYPE_TRAITS=0 -DTF_USE_SNAPPY -DTENSORFLOW_USE_CUSTOM_CONTRACTION_KERNEL -DTENSORFLOW_USE_MKLDNN_CONTRACTION_KERNEL -DBACKEND_LIB)
+
+dtu_cc_library(
+    NAME convert
+    SRCS ${convert_srcs}
+    DEPS transform quarter util convert_util
+)
+
+#############################################
+###########  INCLUDE DIRECTORIES  ###########
+#############################################
+
+include_directories("${CMAKE_SOURCE_DIR}/3rdparty/protobuf-3.8.0/src")
+
+
+
+##########################################
+##########  ADD DEPENDENCIES  ############
+##########################################
+

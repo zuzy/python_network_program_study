@@ -1,0 +1,3 @@
+[submodule "scraping/parse_gerrit_rest_query"]
+	path = scraping/parse_gerrit_rest_query
+	url = git@github.com:scar45/parse_gerrit_rest_query.git
